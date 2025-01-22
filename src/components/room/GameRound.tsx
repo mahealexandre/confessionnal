@@ -142,7 +142,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedAction(action.action_text);
             if (newState.dialog_open) {
               setShowDialog(true);
-              setIsSpinning(false); // Stop spinning when dialog opens
+              setIsSpinning(false);
             }
           }
 
@@ -221,7 +221,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       setShowDialog(false);
       setIsSpinning(false);
       hasClickedRef.current = false;
-      setReadyCount(0); // Reset the local ready count state
+      setReadyCount(0);
       onNextRound();
     }
   };
