@@ -29,6 +29,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
   const [readyCount, setReadyCount] = useState(0);
   const isDrawingRef = useRef(false);
+  const hasInitializedRef = useRef(false);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
@@ -87,6 +88,33 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   }, [players, actions, isSpinning, usedActionIds, navigate]);
 
   useEffect(() => {
+    const initializeGameState = async () => {
+      if (players.length === 0 || hasInitializedRef.current) return;
+      
+      const roomId = players[0].room_id;
+      const { data: existingState } = await supabase
+        .from('game_state')
+        .select('*')
+        .eq('room_id', roomId)
+        .maybeSingle();
+
+      if (!existingState) {
+        await supabase
+          .from('game_state')
+          .insert({
+            room_id: roomId,
+            ready_count: 0,
+            dialog_open: false
+          });
+      }
+      
+      hasInitializedRef.current = true;
+    };
+
+    initializeGameState();
+  }, [players]);
+
+  useEffect(() => {
     const channel = supabase
       .channel('game_state_changes')
       .on(
@@ -100,21 +128,22 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
+          if (newState.ready_count === players.length && !isSpinning) {
+            setIsSpinning(true);
+          }
+          
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
           
           if (player && action) {
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
-            setTimeout(() => {
-              setShowDialog(newState.dialog_open ?? false);
-            }, 3000);
+            if (newState.dialog_open) {
+              setShowDialog(true);
+            }
           }
 
           setReadyCount(newState.ready_count || 0);
-          if (newState.ready_count === players.length) {
-            setIsSpinning(true);
-          }
         }
       )
       .subscribe();
@@ -122,14 +151,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [players, actions]);
+  }, [players, actions, isSpinning]);
 
   const handleChooseClick = async () => {
     if (players.length === 0) return;
     
     const roomId = players[0].room_id;
 
-    // Créer ou mettre à jour l'état du jeu
     const { data: existingState } = await supabase
       .from('game_state')
       .select('ready_count')
@@ -137,7 +165,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       .maybeSingle();
 
     if (!existingState) {
-      // Si aucun état n'existe, on le crée
       await supabase
         .from('game_state')
         .insert({
@@ -146,7 +173,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           dialog_open: false
         });
     } else {
-      // Si l'état existe, on incrémente le compteur
       const newCount = (existingState.ready_count || 0) + 1;
       await supabase
         .from('game_state')
@@ -166,27 +192,15 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         .from('game_state')
         .update({
           dialog_open: false,
-          ready_count: 0
+          ready_count: 0,
+          current_player_id: null,
+          current_action_id: null
         })
         .eq('room_id', selectedPlayer.room_id);
 
       if (dialogError) {
         console.error('Error updating dialog state:', dialogError);
         return;
-      }
-
-      const { error } = await supabase
-        .from('game_state')
-        .update({
-          current_player_id: null,
-          current_action_id: null,
-          dialog_open: false,
-          ready_count: 0
-        })
-        .eq('room_id', selectedPlayer.room_id);
-
-      if (error) {
-        console.error('Error resetting game state:', error);
       }
 
       setShowDialog(false);
