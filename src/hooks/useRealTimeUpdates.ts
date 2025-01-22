@@ -28,30 +28,31 @@ export const useRealTimeUpdates = (
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setPlayers((current) => [...current, payload.new as Player]);
+            const newPlayer = payload.new as Player;
+            const updatedPlayers = [...players, newPlayer];
+            setPlayers(updatedPlayers);
+            
             toast({
               title: "Nouveau joueur",
-              description: `${payload.new.username} a rejoint la salle !`,
+              description: `${newPlayer.username} a rejoint la salle !`,
             });
           } else if (payload.eventType === "UPDATE") {
-            setPlayers((current) =>
-              current.map((player) =>
-                player.id === payload.new.id ? { ...player, ...payload.new } : player
-              )
+            const updatedPlayer = payload.new as Player;
+            const updatedPlayers = players.map((player) =>
+              player.id === updatedPlayer.id ? { ...player, ...updatedPlayer } : player
             );
+            setPlayers(updatedPlayers);
 
             // Check if all players have submitted their actions
-            const updatedPlayers = players.map((player) =>
-              player.id === payload.new.id ? { ...player, ...payload.new } : player
-            );
-            
             if (updatedPlayers.every((p) => p.has_submitted) && roomStatus === "playing") {
               onAllPlayersSubmitted();
             }
           } else if (payload.eventType === "DELETE") {
-            setPlayers((current) =>
-              current.filter((player) => player.id !== payload.old.id)
+            const deletedPlayer = payload.old as Player;
+            const remainingPlayers = players.filter(
+              (player) => player.id !== deletedPlayer.id
             );
+            setPlayers(remainingPlayers);
           }
         }
       )
