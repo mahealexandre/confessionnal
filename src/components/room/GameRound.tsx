@@ -33,7 +33,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (players.length > 0) {
       const roomId = players[0].room_id;
       
-      // Delete game data
+      // Delete all game data
       await Promise.all([
         supabase.from('game_state').delete().eq('room_id', roomId),
         supabase.from('player_actions').delete().eq('room_id', roomId),
@@ -53,14 +53,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       setTimeout(async () => {
         setIsSpinning(false);
         
-        const randomPlayer = players[Math.floor(Math.random() * players.length)];
-        const availableActions = actions.filter(
-          (action) => 
-            action.player_id === randomPlayer.id && 
-            !usedActionIds.includes(action.id)
-        );
-
-        if (!randomPlayer || availableActions.length === 0) {
+        // Filter out used actions before selecting a random one
+        const availableActions = actions.filter(action => !usedActionIds.includes(action.id));
+        
+        if (availableActions.length === 0) {
           toast({
             title: "Partie terminée !",
             description: "Toutes les actions ont été réalisées.",
@@ -72,6 +68,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         const randomAction = availableActions[
           Math.floor(Math.random() * availableActions.length)
         ];
+
+        const randomPlayer = players.find(p => p.id === randomAction.player_id);
+
+        if (!randomPlayer) {
+          console.error('Player not found for action:', randomAction);
+          return;
+        }
 
         const { error } = await supabase
           .from('game_state')
@@ -104,7 +107,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          // Find the selected player and action from the new state
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
           
@@ -112,9 +114,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
             setShowDialog(true);
-          } else {
-            setShowDialog(false);
-            setIsSpinning(true);
           }
         }
       )
@@ -144,18 +143,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         console.error('Error resetting game state:', error);
       }
 
-      const remainingActions = actions.filter(action => !usedActionIds.includes(action.id));
-      if (remainingActions.length === 0) {
-        toast({
-          title: "Partie terminée !",
-          description: "Toutes les actions ont été réalisées.",
-        });
-        await cleanupGame();
-      }
+      setShowDialog(false);
+      setIsSpinning(true);
+      onNextRound();
     }
-    
-    setShowDialog(false);
-    onNextRound();
   };
 
   return (
