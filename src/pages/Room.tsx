@@ -22,6 +22,7 @@ const Room = () => {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
+        // Fetch room data
         const { data: room, error: roomError } = await supabase
           .from("rooms")
           .select()
@@ -32,6 +33,13 @@ const Room = () => {
         setRoomId(room.id);
         setRoomStatus(room.status);
 
+        // Get stored player ID
+        const storedPlayerId = localStorage.getItem("playerId");
+        if (storedPlayerId) {
+          setCurrentPlayerId(storedPlayerId);
+        }
+
+        // Fetch players in room
         const { data: playersData, error: playersError } = await supabase
           .from("players")
           .select()
@@ -39,20 +47,15 @@ const Room = () => {
 
         if (playersError) throw playersError;
         setPlayers(playersData);
-        
-        const currentPlayer = playersData.find(
-          (p) => p.id === localStorage.getItem("playerId")
-        );
-        if (currentPlayer) {
-          setCurrentPlayerId(currentPlayer.id);
-        }
 
+        // Only fetch actions if room is in playing state
         if (room.status === "playing") {
-          const { data: actionsData } = await supabase
+          const { data: actionsData, error: actionsError } = await supabase
             .from("player_actions")
             .select()
             .eq("room_id", room.id);
-          
+
+          if (actionsError) throw actionsError;
           if (actionsData) {
             setActions(actionsData);
             setRemainingActions(actionsData);
@@ -60,11 +63,18 @@ const Room = () => {
         }
       } catch (error) {
         console.error("Error fetching room:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de rejoindre la salle.",
+        });
         navigate("/");
       }
     };
 
-    fetchRoom();
+    if (code) {
+      fetchRoom();
+    }
 
     const channel = supabase
       .channel("room_changes")
@@ -90,7 +100,6 @@ const Room = () => {
               )
             );
 
-            // Vérifier si tous les joueurs ont soumis leurs actions
             const updatedPlayers = players.map((player) =>
               player.id === payload.new.id ? { ...player, ...payload.new } : player
             );
@@ -153,11 +162,24 @@ const Room = () => {
   };
 
   const onSubmit = async (values: { actions: string[] }) => {
+    if (!currentPlayerId || !roomId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission des actions.",
+      });
+      return;
+    }
+
     try {
       const promises = values.actions.map((action) =>
         supabase
           .from("player_actions")
-          .insert({ player_id: currentPlayerId, action_text: action, room_id: roomId })
+          .insert({ 
+            player_id: currentPlayerId, 
+            action_text: action,
+            room_id: roomId 
+          })
       );
 
       await Promise.all(promises);

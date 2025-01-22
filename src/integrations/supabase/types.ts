@@ -15,18 +15,21 @@ export type Database = {
           created_at: string
           id: string
           player_id: string | null
+          room_id: string
         }
         Insert: {
           action_text: string
           created_at?: string
           id?: string
           player_id?: string | null
+          room_id: string
         }
         Update: {
           action_text?: string
           created_at?: string
           id?: string
           player_id?: string | null
+          room_id?: string
         }
         Relationships: [
           {
@@ -34,6 +37,13 @@ export type Database = {
             columns: ["player_id"]
             isOneToOne: false
             referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "player_actions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
         ]
