@@ -33,16 +33,30 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (players.length > 0) {
       const roomId = players[0].room_id;
       
-      // Delete game data
-      await Promise.all([
-        supabase.from('game_state').delete().eq('room_id', roomId),
-        supabase.from('player_actions').delete().eq('room_id', roomId),
-        supabase.from('players').delete().eq('room_id', roomId),
-        supabase.from('rooms').delete().eq('id', roomId)
-      ]);
+      try {
+        // Delete all game data in parallel
+        await Promise.all([
+          supabase.from('game_state').delete().eq('room_id', roomId),
+          supabase.from('player_actions').delete().eq('room_id', roomId),
+          supabase.from('players').delete().eq('room_id', roomId),
+          supabase.from('rooms').delete().eq('id', roomId)
+        ]);
 
-      // Navigate to home
-      navigate('/');
+        toast({
+          title: "Partie terminée !",
+          description: "Toutes les données ont été nettoyées.",
+        });
+
+        // Navigate to home
+        navigate('/');
+      } catch (error) {
+        console.error('Error cleaning up game:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de nettoyer les données du jeu.",
+        });
+      }
     }
   };
 
@@ -53,14 +67,14 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       setTimeout(async () => {
         setIsSpinning(false);
         
-        const randomPlayer = players[Math.floor(Math.random() * players.length)];
+        // Filter out used actions
         const availableActions = actions.filter(
           (action) => 
-            action.player_id === randomPlayer.id && 
-            !usedActionIds.includes(action.id)
+            !usedActionIds.includes(action.id) && 
+            action.player_id === selectedPlayer?.id
         );
 
-        if (!randomPlayer || availableActions.length === 0) {
+        if (availableActions.length === 0) {
           toast({
             title: "Partie terminée !",
             description: "Toutes les actions ont été réalisées.",
@@ -76,8 +90,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         const { error } = await supabase
           .from('game_state')
           .upsert({
-            room_id: randomPlayer.room_id,
-            current_player_id: randomPlayer.id,
+            room_id: selectedPlayer?.room_id,
+            current_player_id: selectedPlayer?.id,
             current_action_id: randomAction.id
           });
 
@@ -88,7 +102,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         isDrawingRef.current = false;
       }, 3000);
     }
-  }, [players, actions, isSpinning, usedActionIds, navigate]);
+  }, [players, actions, isSpinning, selectedPlayer, usedActionIds, navigate]);
 
   useEffect(() => {
     const channel = supabase
@@ -104,7 +118,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          // Find the selected player and action from the new state
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
           
@@ -112,9 +125,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
             setShowDialog(true);
-          } else {
-            setShowDialog(false);
-            setIsSpinning(true);
           }
         }
       )
@@ -146,15 +156,12 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       const remainingActions = actions.filter(action => !usedActionIds.includes(action.id));
       if (remainingActions.length === 0) {
-        toast({
-          title: "Partie terminée !",
-          description: "Toutes les actions ont été réalisées.",
-        });
         await cleanupGame();
       }
     }
     
     setShowDialog(false);
+    setIsSpinning(true);
     onNextRound();
   };
 
