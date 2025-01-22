@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const actionSchema = z.object({
   actions: z.array(z.string().min(1, "Action is required")).length(5),
@@ -20,6 +21,8 @@ interface ActionFormProps {
 
 export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
     defaultValues: {
@@ -28,14 +31,15 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
   });
 
   const handleSubmit = async (values: ActionFormValues) => {
+    if (isSubmitting) return; // Prevent double submission
+    
     try {
+      setIsSubmitting(true);
       console.log("Starting action submission with values:", values);
       
-      // First get the room code from the URL
       const roomCode = window.location.pathname.split('/').pop();
       console.log("Room code:", roomCode);
 
-      // Then get the room UUID from the database
       const { data: roomData, error: roomError } = await supabase
         .from("rooms")
         .select("id")
@@ -50,7 +54,6 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
       const roomId = roomData.id;
       console.log("Room UUID:", roomId);
 
-      // Now get the player ID using the room UUID
       const playerId = localStorage.getItem(`player_id_${roomId}`);
       console.log("Player ID:", playerId);
 
@@ -59,7 +62,22 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
         throw new Error("Missing player ID");
       }
 
-      // Insert each action into the database
+      // Check if player has already submitted actions
+      const { data: existingActions } = await supabase
+        .from("player_actions")
+        .select("id")
+        .eq("player_id", playerId)
+        .eq("room_id", roomId);
+
+      if (existingActions && existingActions.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Vous avez déjà soumis vos actions.",
+        });
+        return;
+      }
+
       const actionsToInsert = values.actions.map(action => ({
         player_id: playerId,
         room_id: roomId,
@@ -79,7 +97,6 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
 
       console.log("Actions inserted successfully");
 
-      // Update player's submission status
       const { error: updateError } = await supabase
         .from("players")
         .update({ has_submitted: true })
@@ -92,6 +109,21 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
 
       console.log("Player status updated successfully");
 
+      // Check if all players have submitted
+      const newSubmittedCount = submittedCount + 1;
+      if (newSubmittedCount >= totalPlayers) {
+        // Update room status to playing
+        const { error: roomUpdateError } = await supabase
+          .from("rooms")
+          .update({ status: "playing" })
+          .eq("id", roomId);
+
+        if (roomUpdateError) {
+          console.error("Error updating room status:", roomUpdateError);
+          throw roomUpdateError;
+        }
+      }
+
       toast({
         title: "Actions soumises !",
         description: "Vos actions ont été enregistrées avec succès.",
@@ -103,6 +135,8 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
         title: "Erreur",
         description: "Une erreur est survenue lors de la soumission des actions.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,8 +171,9 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
             <Button
               type="submit"
               className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+              disabled={isSubmitting}
             >
-              Suivant
+              {isSubmitting ? "Envoi en cours..." : "Suivant"}
             </Button>
           </form>
         </Form>
