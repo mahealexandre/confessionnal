@@ -30,13 +30,17 @@ const Room = () => {
           .single();
 
         if (roomError) throw roomError;
+        
         setRoomId(room.id);
         setRoomStatus(room.status);
 
         // Get stored player ID
-        const storedPlayerId = localStorage.getItem("playerId");
+        const storedPlayerId = localStorage.getItem(`player_id_${room.id}`);
+        console.log("Stored player ID:", storedPlayerId);
+        
         if (storedPlayerId) {
           setCurrentPlayerId(storedPlayerId);
+          console.log("Setting current player ID to:", storedPlayerId);
         }
 
         // Fetch players in room
@@ -149,6 +153,10 @@ const Room = () => {
   };
 
   const onSubmit = async (values: { actions: string[] }) => {
+    console.log("Starting onSubmit with values:", values);
+    console.log("Current player ID:", currentPlayerId);
+    console.log("Room ID:", roomId);
+
     if (!currentPlayerId || !roomId) {
       console.error("Missing currentPlayerId or roomId:", { currentPlayerId, roomId });
       toast({
@@ -160,24 +168,24 @@ const Room = () => {
     }
 
     try {
-      console.log("Submitting actions for player:", currentPlayerId);
-      console.log("Room ID:", roomId);
-      console.log("Actions:", values.actions);
-
       const actionsToInsert = values.actions.map(action => ({
         player_id: currentPlayerId,
         room_id: roomId,
         action_text: action
       }));
 
-      const { error } = await supabase
+      console.log("Inserting actions:", actionsToInsert);
+
+      const { error: insertError } = await supabase
         .from("player_actions")
         .insert(actionsToInsert);
 
-      if (error) {
-        console.error("Error inserting actions:", error);
-        throw error;
+      if (insertError) {
+        console.error("Error inserting actions:", insertError);
+        throw insertError;
       }
+
+      console.log("Actions inserted successfully");
 
       const { error: updateError } = await supabase
         .from("players")
@@ -188,6 +196,8 @@ const Room = () => {
         console.error("Error updating player status:", updateError);
         throw updateError;
       }
+
+      console.log("Player status updated successfully");
 
       toast({
         title: "Actions soumises !",
