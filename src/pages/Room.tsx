@@ -128,6 +128,8 @@ const Room = () => {
   }, [code, navigate, roomId, toast, roomStatus]);
 
   const startGame = async () => {
+    if (!roomId) return;
+    
     try {
       const { error } = await supabase
         .from("rooms")
