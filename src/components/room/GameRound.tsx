@@ -30,6 +30,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [readyCount, setReadyCount] = useState(0);
   const isDrawingRef = useRef(false);
   const hasInitializedRef = useRef(false);
+  const hasClickedRef = useRef(false);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
@@ -130,6 +131,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           
           if (newState.ready_count === players.length && !isSpinning) {
             setIsSpinning(true);
+            hasClickedRef.current = false; // Reset the click state when spinning starts
           }
           
           const player = players.find(p => p.id === newState.current_player_id);
@@ -154,7 +156,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   }, [players, actions, isSpinning]);
 
   const handleChooseClick = async () => {
-    if (players.length === 0) return;
+    if (players.length === 0 || hasClickedRef.current) return;
     
     const roomId = players[0].room_id;
     
@@ -180,6 +182,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           title: "Erreur",
           description: "Impossible de mettre à jour le compteur.",
         });
+      } else {
+        hasClickedRef.current = true; // Mark that this client has clicked
       }
     } catch (error) {
       console.error('Error in handleChooseClick:', error);
@@ -215,6 +219,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setShowDialog(false);
       setIsSpinning(false);
+      hasClickedRef.current = false; // Reset the click state when the round is done
       onNextRound();
     }
   };
@@ -248,7 +253,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           <div className="mt-4">
             <Button 
               onClick={handleChooseClick}
-              disabled={isSpinning}
+              disabled={isSpinning || hasClickedRef.current}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
             >
               Choisir ({readyCount}/{players.length})
