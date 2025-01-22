@@ -9,9 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      player_actions: {
+        Row: {
+          action_text: string
+          created_at: string
+          id: string
+          player_id: string | null
+        }
+        Insert: {
+          action_text: string
+          created_at?: string
+          id?: string
+          player_id?: string | null
+        }
+        Update: {
+          action_text?: string
+          created_at?: string
+          id?: string
+          player_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_actions_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           created_at: string
+          has_submitted: boolean | null
           id: string
           is_host: boolean | null
           room_id: string | null
@@ -19,6 +49,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
           room_id?: string | null
@@ -26,6 +57,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
           room_id?: string | null
