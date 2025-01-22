@@ -30,19 +30,34 @@ export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFor
 
   const handleSubmit = async (values: ActionFormValues) => {
     try {
-      // Log the values being submitted
       console.log("Starting action submission with values:", values);
       
-      // Get the current player ID from localStorage
-      const roomId = window.location.pathname.split('/').pop();
+      // First get the room code from the URL
+      const roomCode = window.location.pathname.split('/').pop();
+      console.log("Room code:", roomCode);
+
+      // Then get the room UUID from the database
+      const { data: roomData, error: roomError } = await supabase
+        .from("rooms")
+        .select("id")
+        .eq("code", roomCode)
+        .single();
+
+      if (roomError) {
+        console.error("Error fetching room:", roomError);
+        throw new Error("Could not find room");
+      }
+
+      const roomId = roomData.id;
+      console.log("Room UUID:", roomId);
+
+      // Now get the player ID using the room UUID
       const playerId = localStorage.getItem(`player_id_${roomId}`);
-      
-      console.log("Room ID:", roomId);
       console.log("Player ID:", playerId);
 
-      if (!playerId || !roomId) {
-        console.error("Missing player ID or room ID");
-        throw new Error("Missing player ID or room ID");
+      if (!playerId) {
+        console.error("Missing player ID");
+        throw new Error("Missing player ID");
       }
 
       // Insert each action into the database
