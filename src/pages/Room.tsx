@@ -72,6 +72,22 @@ const Room = () => {
             setRemainingActions(actionsData);
           }
         }
+
+        // Check if all players have submitted their actions
+        const submittedPlayers = playersData.filter(p => p.has_submitted).length;
+        setSubmittedCount(submittedPlayers);
+        
+        if (submittedPlayers === playersData.length && submittedPlayers > 0) {
+          // Start the game if all players have submitted
+          const { error: updateError } = await supabase
+            .from("rooms")
+            .update({ status: "playing" })
+            .eq("id", room.id);
+
+          if (updateError) throw updateError;
+          setRoomStatus("playing");
+        }
+
       } catch (error) {
         console.error("Error fetching room:", error);
         toast({
@@ -87,6 +103,7 @@ const Room = () => {
       fetchRoom();
     }
 
+    // Subscribe to real-time updates
     const channel = supabase
       .channel("room_changes")
       .on(
@@ -97,7 +114,7 @@ const Room = () => {
           table: "players",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload) => {
+        async (payload) => {
           if (payload.eventType === "INSERT") {
             const newPlayer = payload.new as Player;
             setPlayers((current) => [...current, newPlayer]);
@@ -110,11 +127,35 @@ const Room = () => {
               setCurrentPlayerId(newPlayer.id);
             }
           } else if (payload.eventType === "UPDATE") {
+            // Update players list
             setPlayers((current) =>
               current.map((player) =>
                 player.id === payload.new.id ? { ...player, ...payload.new } : player
               )
             );
+
+            // Check if all players have submitted after this update
+            const { data: allPlayers } = await supabase
+              .from("players")
+              .select()
+              .eq("room_id", roomId);
+
+            if (allPlayers) {
+              const submittedCount = allPlayers.filter(p => p.has_submitted).length;
+              setSubmittedCount(submittedCount);
+
+              // If all players have submitted, start the game
+              if (submittedCount === allPlayers.length && submittedCount > 0) {
+                const { error: updateError } = await supabase
+                  .from("rooms")
+                  .update({ status: "playing" })
+                  .eq("id", roomId);
+
+                if (!updateError) {
+                  setRoomStatus("playing");
+                }
+              }
+            }
           } else if (payload.eventType === "DELETE") {
             setPlayers((current) =>
               current.filter((player) => player.id !== payload.old.id)
@@ -143,92 +184,6 @@ const Room = () => {
     };
   }, [code, navigate, roomId, toast, roomStatus]);
 
-  const startGame = async () => {
-    if (!roomId) return;
-    
-    try {
-      const { error } = await supabase
-        .from("rooms")
-        .update({ status: "playing" })
-        .eq("id", roomId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Partie lancée !",
-        description: "Tous les joueurs peuvent maintenant saisir leurs actions.",
-      });
-    } catch (error) {
-      console.error("Error starting game:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de lancer la partie.",
-      });
-    }
-  };
-
-  const onSubmit = async (values: { actions: string[] }) => {
-    console.log("Starting onSubmit with values:", values);
-    console.log("Current player ID:", currentPlayerId);
-    console.log("Room ID:", roomId);
-
-    if (!currentPlayerId || !roomId) {
-      console.error("Missing currentPlayerId or roomId:", { currentPlayerId, roomId });
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission des actions.",
-      });
-      return;
-    }
-
-    try {
-      const actionsToInsert = values.actions.map(action => ({
-        player_id: currentPlayerId,
-        room_id: roomId,
-        action_text: action
-      }));
-
-      console.log("Inserting actions:", actionsToInsert);
-
-      const { error: insertError } = await supabase
-        .from("player_actions")
-        .insert(actionsToInsert);
-
-      if (insertError) {
-        console.error("Error inserting actions:", insertError);
-        throw insertError;
-      }
-
-      console.log("Actions inserted successfully");
-
-      const { error: updateError } = await supabase
-        .from("players")
-        .update({ has_submitted: true })
-        .eq("id", currentPlayerId);
-
-      if (updateError) {
-        console.error("Error updating player status:", updateError);
-        throw updateError;
-      }
-
-      console.log("Player status updated successfully");
-
-      toast({
-        title: "Actions soumises !",
-        description: "Vos actions ont été enregistrées avec succès.",
-      });
-    } catch (error) {
-      console.error("Error in onSubmit:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission des actions.",
-      });
-    }
-  };
-
   const handleNextRound = () => {
     if (remainingActions.length > 0) {
       setRemainingActions((current) => current.slice(1));
@@ -241,21 +196,15 @@ const Room = () => {
     }
   };
 
-  useEffect(() => {
-    const submittedPlayers = players.filter((p) => p.has_submitted).length;
-    setSubmittedCount(submittedPlayers);
-  }, [players]);
-
   const currentPlayer = players.find((p) => p.id === currentPlayerId);
 
   if (roomStatus === "waiting") {
-    return <WaitingRoom code={code || ""} players={players} onStartGame={startGame} />;
+    return <WaitingRoom code={code || ""} players={players} onStartGame={() => {}} />;
   }
 
   if (roomStatus === "playing" && !currentPlayer?.has_submitted) {
     return (
       <ActionForm
-        onSubmit={onSubmit}
         submittedCount={submittedCount}
         totalPlayers={players.length}
       />
