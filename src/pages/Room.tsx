@@ -56,17 +56,6 @@ const Room = () => {
         const submittedPlayers = playersData.filter(p => p.has_submitted).length;
         console.log("Initial submitted count:", submittedPlayers);
         setSubmittedCount(submittedPlayers);
-        
-        if (submittedPlayers === playersData.length && submittedPlayers > 0) {
-          console.log("All players have submitted, updating room status to playing");
-          const { error: updateError } = await supabase
-            .from("rooms")
-            .update({ status: "playing" })
-            .eq("id", room.id);
-
-          if (updateError) throw updateError;
-          setRoomStatus("playing");
-        }
 
         if (room.status === "playing") {
           const { data: actionsData, error: actionsError } = await supabase
@@ -96,6 +85,7 @@ const Room = () => {
       fetchRoom();
     }
 
+    // Subscribe to players changes
     const playersChannel = supabase
       .channel('players_changes')
       .on(
@@ -120,33 +110,12 @@ const Room = () => {
             const newSubmittedCount = playersData.filter(p => p.has_submitted).length;
             console.log(`Updated submitted count: ${newSubmittedCount}/${playersData.length}`);
             setSubmittedCount(newSubmittedCount);
-
-            if (newSubmittedCount === playersData.length && newSubmittedCount > 0) {
-              console.log("All players have submitted, starting game...");
-              const { error: updateError } = await supabase
-                .from("rooms")
-                .update({ status: "playing" })
-                .eq("id", roomId);
-
-              if (!updateError) {
-                setRoomStatus("playing");
-                
-                const { data: actionsData } = await supabase
-                  .from("player_actions")
-                  .select()
-                  .eq("room_id", roomId);
-
-                if (actionsData) {
-                  setActions(actionsData);
-                  setRemainingActions(actionsData);
-                }
-              }
-            }
           }
         }
       )
       .subscribe();
 
+    // Subscribe to room changes
     const roomChannel = supabase
       .channel('room_changes')
       .on(
@@ -155,11 +124,40 @@ const Room = () => {
           event: 'UPDATE',
           schema: 'public',
           table: 'rooms',
-          filter: `id=eq.${roomId}`,
         },
         (payload) => {
           console.log("Room status changed:", payload.new.status);
-          setRoomStatus(payload.new.status);
+          if (payload.new.id === roomId) {
+            setRoomStatus(payload.new.status);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to player actions changes
+    const actionsChannel = supabase
+      .channel('actions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'player_actions',
+        },
+        async (payload) => {
+          console.log("Actions change detected:", payload);
+          
+          if (!roomId) return;
+
+          const { data: actionsData } = await supabase
+            .from("player_actions")
+            .select()
+            .eq("room_id", roomId);
+
+          if (actionsData) {
+            setActions(actionsData);
+            setRemainingActions(actionsData);
+          }
         }
       )
       .subscribe();
@@ -167,6 +165,7 @@ const Room = () => {
     return () => {
       supabase.removeChannel(playersChannel);
       supabase.removeChannel(roomChannel);
+      supabase.removeChannel(actionsChannel);
     };
   }, [code, navigate, roomId, toast]);
 
