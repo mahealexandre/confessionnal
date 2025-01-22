@@ -17,6 +17,7 @@ export const useRoomData = (code: string | undefined) => {
       try {
         if (!code) return;
         
+        // First, get the room data
         const { data: room, error: roomError } = await supabase
           .from("rooms")
           .select("*")
@@ -53,6 +54,7 @@ export const useRoomData = (code: string | undefined) => {
           return;
         }
 
+        // Then, get the current player data
         const { data: playerData, error: playerError } = await supabase
           .from("players")
           .select()
@@ -61,6 +63,7 @@ export const useRoomData = (code: string | undefined) => {
           .maybeSingle();
 
         if (playerError || !playerData) {
+          console.error("Error fetching player:", playerError);
           localStorage.removeItem(`player_id_${room.id}`);
           navigate("/");
           return;
@@ -68,15 +71,21 @@ export const useRoomData = (code: string | undefined) => {
 
         setCurrentPlayerId(storedPlayerId);
 
+        // Finally, get all players in the room
         const { data: playersData, error: playersError } = await supabase
           .from("players")
           .select()
           .eq("room_id", room.id);
 
-        if (playersError) throw playersError;
+        if (playersError) {
+          console.error("Error fetching players:", playersError);
+          throw playersError;
+        }
+
+        console.log("Initial players data:", playersData);
         setPlayers(playersData || []);
       } catch (error) {
-        console.error("Error fetching room:", error);
+        console.error("Error in fetchRoom:", error);
         toast({
           variant: "destructive",
           title: "Erreur",

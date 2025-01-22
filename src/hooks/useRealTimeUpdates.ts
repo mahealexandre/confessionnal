@@ -16,6 +16,9 @@ export const useRealTimeUpdates = (
   useEffect(() => {
     if (!roomId) return;
 
+    console.log("Setting up real-time updates for room:", roomId);
+    console.log("Current players:", players);
+
     const channel = supabase
       .channel("room_changes")
       .on(
@@ -27,25 +30,37 @@ export const useRealTimeUpdates = (
           filter: `room_id=eq.${roomId}`,
         },
         (payload) => {
+          console.log("Received player update:", payload);
+
           if (payload.eventType === "INSERT") {
-            const updatedPlayers = [...players, payload.new as Player];
+            const newPlayer = payload.new as Player;
+            const updatedPlayers = [...players, newPlayer];
+            console.log("Adding new player:", newPlayer);
+            console.log("Updated players list:", updatedPlayers);
             setPlayers(updatedPlayers);
+            
             toast({
               title: "Nouveau joueur",
-              description: `${payload.new.username} a rejoint la salle !`,
+              description: `${newPlayer.username} a rejoint la salle !`,
             });
           } else if (payload.eventType === "UPDATE") {
             const updatedPlayers = players.map((player) =>
               player.id === payload.new.id ? { ...player, ...payload.new } : player
             );
+            console.log("Updating player:", payload.new);
+            console.log("Updated players list:", updatedPlayers);
             setPlayers(updatedPlayers);
 
-            // Check if all players have submitted their actions
             if (updatedPlayers.every((p) => p.has_submitted) && roomStatus === "playing") {
+              console.log("All players have submitted their actions");
               onAllPlayersSubmitted();
             }
           } else if (payload.eventType === "DELETE") {
-            const updatedPlayers = players.filter((player) => player.id !== payload.old.id);
+            const updatedPlayers = players.filter(
+              (player) => player.id !== payload.old.id
+            );
+            console.log("Removing player:", payload.old);
+            console.log("Updated players list:", updatedPlayers);
             setPlayers(updatedPlayers);
           }
         }
@@ -59,6 +74,7 @@ export const useRealTimeUpdates = (
           filter: `id=eq.${roomId}`,
         },
         (payload) => {
+          console.log("Room status update:", payload);
           if (payload.new.status !== roomStatus) {
             setRoomStatus(payload.new.status);
           }
@@ -67,6 +83,7 @@ export const useRealTimeUpdates = (
       .subscribe();
 
     return () => {
+      console.log("Cleaning up real-time subscription");
       supabase.removeChannel(channel);
     };
   }, [roomId, setPlayers, setRoomStatus, players, roomStatus, toast, onAllPlayersSubmitted]);
