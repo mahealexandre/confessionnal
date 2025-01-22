@@ -50,6 +50,19 @@ const Room = () => {
           .eq("room_id", room.id);
 
         if (playersError) throw playersError;
+        
+        // If we don't have a stored player ID but there's a player in this room
+        // with the same username as stored, use that player's ID
+        if (!storedPlayerId) {
+          const storedUsername = localStorage.getItem('username');
+          const existingPlayer = playersData?.find(p => p.username === storedUsername);
+          if (existingPlayer) {
+            localStorage.setItem(`player_id_${room.id}`, existingPlayer.id);
+            setCurrentPlayerId(existingPlayer.id);
+            console.log("Found existing player, setting ID to:", existingPlayer.id);
+          }
+        }
+        
         setPlayers(playersData);
 
         // Only fetch actions if room is in playing state
@@ -92,7 +105,16 @@ const Room = () => {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setPlayers((current) => [...current, payload.new as Player]);
+            const newPlayer = payload.new as Player;
+            setPlayers((current) => [...current, newPlayer]);
+            
+            // If this is a new player and matches our stored username, save their ID
+            const storedUsername = localStorage.getItem('username');
+            if (storedUsername === newPlayer.username) {
+              localStorage.setItem(`player_id_${roomId}`, newPlayer.id);
+              setCurrentPlayerId(newPlayer.id);
+              console.log("New player created, setting ID to:", newPlayer.id);
+            }
           } else if (payload.eventType === "UPDATE") {
             setPlayers((current) =>
               current.map((player) =>
