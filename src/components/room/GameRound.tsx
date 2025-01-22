@@ -221,6 +221,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       setShowDialog(false);
       setIsSpinning(false);
       hasClickedRef.current = false;
+      setReadyCount(0); // Reset the local ready count state
       onNextRound();
     }
   };
