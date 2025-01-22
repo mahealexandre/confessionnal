@@ -1,9 +1,7 @@
 import { useParams } from "react-router-dom";
 import { WaitingRoom } from "@/components/room/WaitingRoom";
 import { ActionForm } from "@/components/room/ActionForm";
-import { GameRound } from "@/components/room/GameRound";
 import { useRoomState } from "@/hooks/useRoomState";
-import { useActionSubmission } from "@/hooks/useActionSubmission";
 
 const Room = () => {
   const { code } = useParams();
@@ -12,34 +10,33 @@ const Room = () => {
     roomStatus,
     currentPlayerId,
     submittedCount,
-    remainingActions,
     startGame,
-    handleNextRound,
   } = useRoomState(code);
 
-  const { submitActions } = useActionSubmission(currentPlayerId, code);
+  console.log("Current room status:", roomStatus); // Debug log
 
-  const currentPlayer = players.find((p) => p.id === currentPlayerId);
+  if (!code) return null;
 
-  if (roomStatus === "waiting") {
-    return <WaitingRoom code={code || ""} players={players} onStartGame={startGame} />;
-  }
-
-  if (roomStatus === "playing" && !currentPlayer?.has_submitted) {
+  // Show action form when room status is "playing"
+  if (roomStatus === "playing") {
     return (
       <ActionForm
-        onSubmit={submitActions}
+        onSubmit={(values) => {
+          console.log("Submitting actions:", values);
+          // Handle action submission here
+        }}
         submittedCount={submittedCount}
         totalPlayers={players.length}
       />
     );
   }
 
+  // Show waiting room by default
   return (
-    <GameRound
+    <WaitingRoom
+      code={code}
       players={players}
-      actions={remainingActions}
-      onNextRound={handleNextRound}
+      onStartGame={startGame}
     />
   );
 };
