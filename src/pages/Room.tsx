@@ -55,8 +55,20 @@ const Room = () => {
           console.log("Found player:", currentPlayer);
           localStorage.setItem(`player_id_${room.id}`, currentPlayer.id);
           setCurrentPlayerId(currentPlayer.id);
-        } else {
-          console.log("No matching player found for username:", storedUsername);
+        }
+
+        // Count submitted players and check if game should start
+        const submittedPlayers = playersData.filter(p => p.has_submitted).length;
+        setSubmittedCount(submittedPlayers);
+        
+        if (submittedPlayers === playersData.length && submittedPlayers > 0) {
+          const { error: updateError } = await supabase
+            .from("rooms")
+            .update({ status: "playing" })
+            .eq("id", room.id);
+
+          if (updateError) throw updateError;
+          setRoomStatus("playing");
         }
 
         // Only fetch actions if room is in playing state
@@ -71,21 +83,6 @@ const Room = () => {
             setActions(actionsData);
             setRemainingActions(actionsData);
           }
-        }
-
-        // Check if all players have submitted their actions
-        const submittedPlayers = playersData.filter(p => p.has_submitted).length;
-        setSubmittedCount(submittedPlayers);
-        
-        if (submittedPlayers === playersData.length && submittedPlayers > 0) {
-          // Start the game if all players have submitted
-          const { error: updateError } = await supabase
-            .from("rooms")
-            .update({ status: "playing" })
-            .eq("id", room.id);
-
-          if (updateError) throw updateError;
-          setRoomStatus("playing");
         }
 
       } catch (error) {
@@ -103,7 +100,7 @@ const Room = () => {
       fetchRoom();
     }
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates for players and room status
     const channel = supabase
       .channel("room_changes")
       .on(
@@ -115,51 +112,43 @@ const Room = () => {
           filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newPlayer = payload.new as Player;
-            setPlayers((current) => [...current, newPlayer]);
-            
-            // If this is our player, save the ID
-            const storedUsername = localStorage.getItem('username');
-            if (storedUsername === newPlayer.username) {
-              console.log("Saving player ID for new player:", newPlayer.id);
-              localStorage.setItem(`player_id_${roomId}`, newPlayer.id);
-              setCurrentPlayerId(newPlayer.id);
-            }
-          } else if (payload.eventType === "UPDATE") {
-            // Update players list
-            setPlayers((current) =>
-              current.map((player) =>
-                player.id === payload.new.id ? { ...player, ...payload.new } : player
-              )
-            );
+          console.log("Players change detected:", payload);
+          
+          // Fetch all players to get the latest state
+          const { data: playersData } = await supabase
+            .from("players")
+            .select()
+            .eq("room_id", roomId);
 
-            // Check if all players have submitted after this update
-            const { data: allPlayers } = await supabase
-              .from("players")
-              .select()
-              .eq("room_id", roomId);
+          if (playersData) {
+            setPlayers(playersData);
+            const submittedCount = playersData.filter(p => p.has_submitted).length;
+            console.log(`Submitted count: ${submittedCount}/${playersData.length}`);
+            setSubmittedCount(submittedCount);
 
-            if (allPlayers) {
-              const submittedCount = allPlayers.filter(p => p.has_submitted).length;
-              setSubmittedCount(submittedCount);
+            // If all players have submitted, start the game
+            if (submittedCount === playersData.length && submittedCount > 0) {
+              console.log("All players have submitted, starting game...");
+              const { error: updateError } = await supabase
+                .from("rooms")
+                .update({ status: "playing" })
+                .eq("id", roomId);
 
-              // If all players have submitted, start the game
-              if (submittedCount === allPlayers.length && submittedCount > 0) {
-                const { error: updateError } = await supabase
-                  .from("rooms")
-                  .update({ status: "playing" })
-                  .eq("id", roomId);
+              if (!updateError) {
+                setRoomStatus("playing");
+                
+                // Fetch actions for the game
+                const { data: actionsData } = await supabase
+                  .from("player_actions")
+                  .select()
+                  .eq("room_id", roomId);
 
-                if (!updateError) {
-                  setRoomStatus("playing");
+                if (actionsData) {
+                  setActions(actionsData);
+                  setRemainingActions(actionsData);
                 }
               }
             }
-          } else if (payload.eventType === "DELETE") {
-            setPlayers((current) =>
-              current.filter((player) => player.id !== payload.old.id)
-            );
           }
         }
       )
@@ -172,6 +161,7 @@ const Room = () => {
           filter: `id=eq.${roomId}`,
         },
         (payload) => {
+          console.log("Room status changed:", payload.new.status);
           if (payload.new.status !== roomStatus) {
             setRoomStatus(payload.new.status);
           }
