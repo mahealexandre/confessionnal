@@ -64,14 +64,33 @@ export const useRoomState = (code: string | undefined) => {
       try {
         if (!code) return;
         
-        // Fetch room data
+        // First fetch room by code to get its UUID
         const { data: room, error: roomError } = await supabase
           .from("rooms")
-          .select()
+          .select("*")
           .eq("code", code)
           .single();
 
-        if (roomError) throw roomError;
+        if (roomError) {
+          console.error("Error fetching room:", roomError);
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de trouver la salle.",
+          });
+          navigate("/");
+          return;
+        }
+
+        if (!room) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Salle introuvable.",
+          });
+          navigate("/");
+          return;
+        }
         
         setRoomId(room.id);
         setRoomStatus(room.status);
@@ -106,7 +125,7 @@ export const useRoomState = (code: string | undefined) => {
           .eq("room_id", room.id);
 
         if (playersError) throw playersError;
-        setPlayers(playersData);
+        setPlayers(playersData || []);
 
         // Only fetch actions if room is in playing state
         if (room.status === "playing") {
