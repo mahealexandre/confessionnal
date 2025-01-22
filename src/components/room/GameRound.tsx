@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { SpinningWheel } from "./SpinningWheel";
 
 interface GameRoundProps {
   players: Player[];
@@ -27,28 +28,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const isDrawingRef = useRef(false);
 
   useEffect(() => {
-    const spinDuration = 3000;
-    const spinInterval = 100;
-    let currentIndex = 0;
-    let spinTimer: NodeJS.Timeout;
-
-    const spin = () => {
-      if (isSpinning) {
-        currentIndex = (currentIndex + 1) % players.length;
-        setSelectedPlayer(players[currentIndex]);
-        spinTimer = setTimeout(spin, spinInterval);
-      }
-    };
-
     // Prevent multiple draws from happening simultaneously
     if (!isDrawingRef.current && isSpinning) {
       isDrawingRef.current = true;
-      spin();
 
       // When the spinning stops, select a random player and unused action
       setTimeout(async () => {
         setIsSpinning(false);
-        clearTimeout(spinTimer);
         
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const availableActions = actions.filter(
@@ -83,13 +69,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         }
 
         isDrawingRef.current = false;
-      }, spinDuration);
+      }, 3000);
     }
-
-    return () => clearTimeout(spinTimer);
   }, [players, actions, isSpinning, usedActionIds]);
 
-  // Subscribe to game state changes
   useEffect(() => {
     const channel = supabase
       .channel('game_state_changes')
@@ -167,6 +150,12 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
             {selectedPlayer?.username || "..."}
           </h1>
+          <SpinningWheel
+            players={players}
+            isSpinning={isSpinning}
+            selectedPlayer={selectedPlayer}
+            onSpinComplete={() => setIsSpinning(false)}
+          />
         </div>
 
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
