@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
@@ -37,20 +37,15 @@ const Index = () => {
       if (roomError) throw roomError;
 
       // Créer le joueur hôte
-      const { data: player, error: playerError } = await supabase
+      const { error: playerError } = await supabase
         .from("players")
         .insert([{ 
           room_id: room.id,
           username,
           is_host: true
-        }])
-        .select()
-        .single();
+        }]);
 
       if (playerError) throw playerError;
-
-      // Stocker l'ID du joueur dans le localStorage
-      localStorage.setItem(`player_id_${room.id}`, player.id);
 
       navigate(`/room/${room.code}`);
     } catch (error) {
@@ -84,19 +79,14 @@ const Index = () => {
       if (roomError) throw roomError;
 
       // Ajouter le joueur à la salle
-      const { data: player, error: playerError } = await supabase
+      const { error: playerError } = await supabase
         .from("players")
         .insert([{ 
           room_id: room.id,
           username
-        }])
-        .select()
-        .single();
+        }]);
 
       if (playerError) throw playerError;
-
-      // Stocker l'ID du joueur dans le localStorage
-      localStorage.setItem(`player_id_${room.id}`, player.id);
 
       navigate(`/room/${room.code}`);
     } catch (error) {
