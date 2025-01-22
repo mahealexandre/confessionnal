@@ -39,23 +39,67 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
     spin();
 
-    setTimeout(() => {
+    // When the spinning stops, select a random player and action
+    setTimeout(async () => {
       setIsSpinning(false);
       clearTimeout(spinTimer);
+      
       const randomPlayer = players[Math.floor(Math.random() * players.length)];
       const playerActions = actions.filter(
         (action) => action.player_id === randomPlayer.id
       );
       const randomAction =
         playerActions[Math.floor(Math.random() * playerActions.length)];
-      
-      setSelectedPlayer(randomPlayer);
-      setSelectedAction(randomAction?.action_text || "");
-      setShowDialog(true);
+
+      // Update the game state in Supabase
+      const { error } = await supabase
+        .from('game_state')
+        .upsert({
+          room_id: randomPlayer.room_id,
+          current_player_id: randomPlayer.id,
+          current_action_id: randomAction?.id
+        });
+
+      if (error) {
+        console.error('Error updating game state:', error);
+      }
     }, spinDuration);
 
     return () => clearTimeout(spinTimer);
   }, [players, actions, isSpinning]);
+
+  // Subscribe to game state changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('game_state_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'game_state'
+        },
+        async (payload) => {
+          console.log('Game state changed:', payload);
+          const newState = payload.new as any;
+          
+          // Find the selected player and action from the new state
+          const player = players.find(p => p.id === newState.current_player_id);
+          const action = actions.find(a => a.id === newState.current_action_id);
+          
+          if (player && action) {
+            setSelectedPlayer(player);
+            setSelectedAction(action.action_text);
+            setShowDialog(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [players, actions]);
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
