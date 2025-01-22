@@ -34,9 +34,24 @@ const Room = () => {
         setRoomStatus(room.status);
 
         // Get stored player ID
-        const storedPlayerId = localStorage.getItem("playerId");
+        const storedPlayerId = localStorage.getItem(`player_id_${room.id}`);
         if (storedPlayerId) {
           setCurrentPlayerId(storedPlayerId);
+          
+          // Verify if the player exists in the room
+          const { data: playerData, error: playerError } = await supabase
+            .from("players")
+            .select()
+            .eq("id", storedPlayerId)
+            .eq("room_id", room.id)
+            .single();
+
+          if (playerError || !playerData) {
+            localStorage.removeItem(`player_id_${room.id}`);
+            setCurrentPlayerId(null);
+            navigate("/");
+            return;
+          }
         }
 
         // Fetch players in room
