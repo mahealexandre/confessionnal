@@ -19,7 +19,7 @@ interface ActionFormProps {
   totalPlayers: number;
 }
 
-export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFormProps) => {
+export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) => {
   const { toast } = useToast();
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
@@ -92,9 +92,6 @@ export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFor
       }
 
       console.log("Player status updated successfully");
-      
-      // Call the parent component's onSubmit
-      await onSubmit(values);
 
       toast({
         title: "Actions soumises !",

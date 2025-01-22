@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
+import { supabase } from "@/integrations/supabase/client";
 
 interface GameRoundProps {
   players: Player[];
