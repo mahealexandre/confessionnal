@@ -10,7 +10,6 @@ interface SpinningWheelProps {
 
 export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinComplete }: SpinningWheelProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -21,7 +20,7 @@ export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinCompl
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 40;
+    const radius = Math.min(centerX, centerY) - 40; // Reduced radius to make room for arrow
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -53,32 +52,31 @@ export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinCompl
       ctx.restore();
     });
 
+    // Draw arrow (outside the wheel)
+    ctx.save();
+    ctx.translate(centerX + radius + 20, centerY);
+    ctx.fillStyle = "#6366F1";
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(-30, 0);
+    ctx.lineTo(0, 15);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
   }, [players, selectedPlayer]);
 
   return (
     <div className="relative w-full max-w-md mx-auto">
-      {/* Stationary arrow */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 transform -translate-x-4">
-        <div className="w-8 h-8">
-          <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[30px] border-l-indigo-500 border-b-[15px] border-b-transparent" />
-        </div>
-      </div>
-      
-      {/* Spinning wheel container */}
-      <div 
-        ref={wheelRef}
-        className={`relative w-full aspect-square ${
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={400}
+        className={`w-full h-full ${
           isSpinning ? "animate-[spin_3s_ease-out]" : ""
         }`}
         onAnimationEnd={onSpinComplete}
-      >
-        <canvas
-          ref={canvasRef}
-          width={400}
-          height={400}
-          className="w-full h-full"
-        />
-      </div>
+      />
     </div>
   );
 };
