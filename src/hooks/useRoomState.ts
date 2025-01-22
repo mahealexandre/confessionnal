@@ -69,7 +69,7 @@ export const useRoomState = (code: string | undefined) => {
           .from("rooms")
           .select("*")
           .eq("code", code)
-          .single();
+          .maybeSingle();
 
         if (roomError) {
           console.error("Error fetching room:", roomError);
@@ -108,7 +108,7 @@ export const useRoomState = (code: string | undefined) => {
           .select()
           .eq("id", storedPlayerId)
           .eq("room_id", room.id)
-          .single();
+          .maybeSingle();
 
         if (playerError || !playerData) {
           localStorage.removeItem(`player_id_${room.id}`);
@@ -118,7 +118,7 @@ export const useRoomState = (code: string | undefined) => {
 
         setCurrentPlayerId(storedPlayerId);
 
-        // Fetch players in room
+        // Fetch players in room using room UUID
         const { data: playersData, error: playersError } = await supabase
           .from("players")
           .select()
@@ -127,8 +127,8 @@ export const useRoomState = (code: string | undefined) => {
         if (playersError) throw playersError;
         setPlayers(playersData || []);
 
-        // Only fetch actions if room is in playing state
-        if (room.status === "playing") {
+        // Only fetch actions if room is in playing state and we have the room UUID
+        if (room.status === "playing" && room.id) {
           const { data: actionsData, error: actionsError } = await supabase
             .from("player_actions")
             .select()
