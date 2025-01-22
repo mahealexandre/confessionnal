@@ -215,7 +215,7 @@ const Room = () => {
     );
   }
 
-  if (roomStatus === "submitting" && !currentPlayer?.has_submitted) {
+  if (roomStatus === "submitting") {
     return (
       <ActionForm
         submittedCount={submittedCount}
