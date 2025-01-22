@@ -157,27 +157,37 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (players.length === 0) return;
     
     const roomId = players[0].room_id;
-
-    const { data: existingState } = await supabase
-      .from('game_state')
-      .select('ready_count')
-      .eq('room_id', roomId)
-      .maybeSingle();
-
-    if (!existingState) {
-      await supabase
+    
+    try {
+      const { data: currentState } = await supabase
         .from('game_state')
-        .insert({
-          room_id: roomId,
-          ready_count: 1,
-          dialog_open: false
-        });
-    } else {
-      const newCount = (existingState.ready_count || 0) + 1;
-      await supabase
+        .select('ready_count')
+        .eq('room_id', roomId)
+        .maybeSingle();
+
+      const currentCount = currentState?.ready_count || 0;
+      const newCount = currentCount + 1;
+
+      const { error: updateError } = await supabase
         .from('game_state')
         .update({ ready_count: newCount })
         .eq('room_id', roomId);
+
+      if (updateError) {
+        console.error('Error updating ready count:', updateError);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le compteur.",
+        });
+      }
+    } catch (error) {
+      console.error('Error in handleChooseClick:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue.",
+      });
     }
   };
 
