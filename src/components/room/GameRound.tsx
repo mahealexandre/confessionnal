@@ -119,6 +119,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
+          if (newState.ready_count > 0) {
+            setIsSpinning(true);
+          }
+          
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
           
