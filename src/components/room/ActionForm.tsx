@@ -14,7 +14,6 @@ const actionSchema = z.object({
 type ActionFormValues = z.infer<typeof actionSchema>;
 
 interface ActionFormProps {
-  onSubmit: (values: ActionFormValues) => void;
   submittedCount: number;
   totalPlayers: number;
 }
