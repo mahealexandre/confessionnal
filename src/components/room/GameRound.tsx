@@ -128,21 +128,30 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (players.length === 0) return;
     
     const roomId = players[0].room_id;
-    const { data: gameState } = await supabase
+
+    // Créer ou mettre à jour l'état du jeu
+    const { data: existingState } = await supabase
       .from('game_state')
       .select('ready_count')
       .eq('room_id', roomId)
-      .single();
+      .maybeSingle();
 
-    const newCount = (gameState?.ready_count || 0) + 1;
-    
-    await supabase
-      .from('game_state')
-      .update({ ready_count: newCount })
-      .eq('room_id', roomId);
-
-    if (newCount === players.length) {
-      setIsSpinning(true);
+    if (!existingState) {
+      // Si aucun état n'existe, on le crée
+      await supabase
+        .from('game_state')
+        .insert({
+          room_id: roomId,
+          ready_count: 1,
+          dialog_open: false
+        });
+    } else {
+      // Si l'état existe, on incrémente le compteur
+      const newCount = (existingState.ready_count || 0) + 1;
+      await supabase
+        .from('game_state')
+        .update({ ready_count: newCount })
+        .eq('room_id', roomId);
     }
   };
 
