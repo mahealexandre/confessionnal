@@ -96,7 +96,6 @@ const Room = () => {
       fetchRoom();
     }
 
-    // Enable REPLICA IDENTITY FULL for the players table to ensure complete row data
     const playersChannel = supabase
       .channel('players_changes')
       .on(
