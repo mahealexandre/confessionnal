@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ interface GameRoundProps {
 }
 
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
+  const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState(true);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedAction, setSelectedAction] = useState<string>("");
@@ -27,12 +29,27 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
   const isDrawingRef = useRef(false);
 
+  const cleanupGame = async () => {
+    if (players.length > 0) {
+      const roomId = players[0].room_id;
+      
+      // Delete game data
+      await Promise.all([
+        supabase.from('game_state').delete().eq('room_id', roomId),
+        supabase.from('player_actions').delete().eq('room_id', roomId),
+        supabase.from('players').delete().eq('room_id', roomId),
+        supabase.from('rooms').delete().eq('id', roomId)
+      ]);
+
+      // Navigate to home
+      navigate('/');
+    }
+  };
+
   useEffect(() => {
-    // Prevent multiple draws from happening simultaneously
     if (!isDrawingRef.current && isSpinning) {
       isDrawingRef.current = true;
 
-      // When the spinning stops, select a random player and unused action
       setTimeout(async () => {
         setIsSpinning(false);
         
@@ -48,6 +65,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             title: "Partie terminée !",
             description: "Toutes les actions ont été réalisées.",
           });
+          await cleanupGame();
           return;
         }
 
@@ -55,7 +73,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           Math.floor(Math.random() * availableActions.length)
         ];
 
-        // Update the game state in Supabase
         const { error } = await supabase
           .from('game_state')
           .upsert({
@@ -71,7 +88,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         isDrawingRef.current = false;
       }, 3000);
     }
-  }, [players, actions, isSpinning, usedActionIds]);
+  }, [players, actions, isSpinning, usedActionIds, navigate]);
 
   useEffect(() => {
     const channel = supabase
@@ -110,13 +127,11 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
-      // Mark the current action as used
       const currentAction = actions.find(a => a.action_text === selectedAction);
       if (currentAction) {
         setUsedActionIds(prev => [...prev, currentAction.id]);
       }
 
-      // Reset game state in Supabase
       const { error } = await supabase
         .from('game_state')
         .update({
@@ -129,13 +144,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         console.error('Error resetting game state:', error);
       }
 
-      // Check if all actions have been used
       const remainingActions = actions.filter(action => !usedActionIds.includes(action.id));
       if (remainingActions.length === 0) {
         toast({
           title: "Partie terminée !",
           description: "Toutes les actions ont été réalisées.",
         });
+        await cleanupGame();
       }
     }
     

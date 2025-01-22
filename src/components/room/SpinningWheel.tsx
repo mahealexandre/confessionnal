@@ -20,7 +20,7 @@ export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinCompl
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 10;
+    const radius = Math.min(centerX, centerY) - 40; // Reduced radius to make room for arrow
 
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -48,27 +48,21 @@ export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinCompl
       ctx.textAlign = "right";
       ctx.fillStyle = "#4B5563";
       ctx.font = "bold 14px sans-serif";
-      ctx.fillText(player.username, radius - 20, 5);
+      ctx.fillText(player.username, radius - 30, 5);
       ctx.restore();
     });
 
-    // Draw center circle
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI);
-    ctx.fillStyle = "#fff";
-    ctx.fill();
-    ctx.strokeStyle = "#E5DEFF";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Draw arrow
-    ctx.beginPath();
-    ctx.moveTo(centerX + 30, centerY);
-    ctx.lineTo(centerX - 30, centerY - 15);
-    ctx.lineTo(centerX - 30, centerY + 15);
-    ctx.closePath();
+    // Draw arrow (outside the wheel)
+    ctx.save();
+    ctx.translate(centerX + radius + 20, centerY);
     ctx.fillStyle = "#6366F1";
+    ctx.beginPath();
+    ctx.moveTo(0, -15);
+    ctx.lineTo(-30, 0);
+    ctx.lineTo(0, 15);
+    ctx.closePath();
     ctx.fill();
+    ctx.restore();
 
   }, [players, selectedPlayer]);
 
@@ -78,9 +72,10 @@ export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinCompl
         ref={canvasRef}
         width={400}
         height={400}
-        className={`w-full h-full transition-transform duration-3000 ${
+        className={`w-full h-full ${
           isSpinning ? "animate-[spin_3s_ease-out]" : ""
         }`}
+        onAnimationEnd={onSpinComplete}
       />
     </div>
   );
