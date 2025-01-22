@@ -9,79 +9,72 @@ interface SpinningWheelProps {
 }
 
 export const SpinningWheel = ({ players, isSpinning, selectedPlayer, onSpinComplete }: SpinningWheelProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (isSpinning && containerRef.current) {
+      const container = containerRef.current;
+      const scrollHeight = container.scrollHeight;
+      const iterations = 3; // Number of complete scrolls before stopping
+      let start: number | null = null;
+      const duration = 3000; // 3 seconds
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      const animate = (timestamp: number) => {
+        if (!start) start = timestamp;
+        const progress = (timestamp - start) / duration;
 
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = Math.min(centerX, centerY) - 40;
-    const segmentAngle = (2 * Math.PI) / players.length;
+        if (progress < 1) {
+          // Easing function for smooth deceleration
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          const totalScroll = scrollHeight * iterations;
+          const currentScroll = totalScroll * easeOut;
+          
+          // Calculate final position to ensure it stops on the selected player
+          const selectedIndex = selectedPlayer ? players.indexOf(selectedPlayer) : 0;
+          const itemHeight = scrollHeight / players.length;
+          const finalPosition = (selectedIndex * itemHeight) % scrollHeight;
+          
+          // Combine the scrolling animation with the final position
+          const adjustedScroll = (currentScroll + finalPosition) % scrollHeight;
+          container.scrollTop = adjustedScroll;
+          
+          requestAnimationFrame(animate);
+        } else {
+          // Ensure we stop exactly on the selected player
+          if (selectedPlayer) {
+            const selectedIndex = players.indexOf(selectedPlayer);
+            const itemHeight = scrollHeight / players.length;
+            container.scrollTop = selectedIndex * itemHeight;
+          }
+          onSpinComplete();
+        }
+      };
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw wheel segments
-    players.forEach((player, index) => {
-      const startAngle = index * segmentAngle;
-      const endAngle = (index + 1) * segmentAngle;
-
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-      ctx.closePath();
-
-      ctx.fillStyle = index % 2 === 0 ? "#E5DEFF" : "#FFDEE2";
-      ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.stroke();
-
-      // Add player names
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(startAngle + segmentAngle / 2);
-      ctx.textAlign = "right";
-      ctx.fillStyle = "#4B5563";
-      ctx.font = "bold 14px sans-serif";
-      ctx.fillText(player.username, radius - 30, 5);
-      ctx.restore();
-    });
-
-  }, [players, selectedPlayer]);
+      requestAnimationFrame(animate);
+    }
+  }, [isSpinning, players, selectedPlayer, onSpinComplete]);
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      {/* Fixed arrow */}
-      <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10 -mr-4">
-        <div className="w-0 h-0 border-t-[15px] border-t-transparent border-l-[30px] border-l-indigo-600 border-b-[15px] border-b-transparent" />
-      </div>
-      
-      {/* Spinning wheel container */}
-      <div 
-        ref={wheelRef}
-        className={`relative ${
-          isSpinning 
-            ? "animate-[spin_3s_cubic-bezier(0.4,0,0.2,1)]" 
-            : "transition-transform duration-500"
-        }`}
+    <div className="relative w-full max-w-md mx-auto overflow-hidden h-16 bg-white/80 backdrop-blur-sm rounded-lg shadow-lg">
+      <div
+        ref={containerRef}
+        className={`h-full overflow-hidden`}
         style={{
-          transformOrigin: "center center",
-          willChange: "transform"
+          scrollBehavior: isSpinning ? 'auto' : 'smooth'
         }}
-        onAnimationEnd={onSpinComplete}
       >
-        <canvas
-          ref={canvasRef}
-          width={400}
-          height={400}
-          className="w-full h-full"
-        />
+        {/* Repeat the list multiple times to create infinite scroll effect */}
+        {[...Array(3)].map((_, i) => (
+          players.map((player) => (
+            <div
+              key={`${player.id}-${i}`}
+              className={`h-16 flex items-center justify-center text-xl font-bold transition-colors
+                ${selectedPlayer?.id === player.id ? 'text-indigo-600' : 'text-gray-700'}`}
+            >
+              {player.username}
+            </div>
+          ))
+        ))}
       </div>
     </div>
   );
