@@ -31,7 +31,52 @@ export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFor
   const handleSubmit = async (values: ActionFormValues) => {
     try {
       // Log the values being submitted
-      console.log("Submitting actions:", values);
+      console.log("Starting action submission with values:", values);
+      
+      // Get the current player ID from localStorage
+      const roomId = window.location.pathname.split('/').pop();
+      const playerId = localStorage.getItem(`player_id_${roomId}`);
+      
+      console.log("Room ID:", roomId);
+      console.log("Player ID:", playerId);
+
+      if (!playerId || !roomId) {
+        console.error("Missing player ID or room ID");
+        throw new Error("Missing player ID or room ID");
+      }
+
+      // Insert each action into the database
+      const actionsToInsert = values.actions.map(action => ({
+        player_id: playerId,
+        room_id: roomId,
+        action_text: action
+      }));
+
+      console.log("Inserting actions:", actionsToInsert);
+
+      const { error: insertError } = await supabase
+        .from("player_actions")
+        .insert(actionsToInsert);
+
+      if (insertError) {
+        console.error("Error inserting actions:", insertError);
+        throw insertError;
+      }
+
+      console.log("Actions inserted successfully");
+
+      // Update player's submission status
+      const { error: updateError } = await supabase
+        .from("players")
+        .update({ has_submitted: true })
+        .eq("id", playerId);
+
+      if (updateError) {
+        console.error("Error updating player status:", updateError);
+        throw updateError;
+      }
+
+      console.log("Player status updated successfully");
       
       // Call the parent component's onSubmit
       await onSubmit(values);
@@ -41,7 +86,7 @@ export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFor
         description: "Vos actions ont été enregistrées avec succès.",
       });
     } catch (error) {
-      console.error("Error submitting actions:", error);
+      console.error("Error in handleSubmit:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
