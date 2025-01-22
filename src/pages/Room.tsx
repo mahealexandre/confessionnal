@@ -59,9 +59,11 @@ const Room = () => {
 
         // Count submitted players and check if game should start
         const submittedPlayers = playersData.filter(p => p.has_submitted).length;
+        console.log("Initial submitted count:", submittedPlayers);
         setSubmittedCount(submittedPlayers);
         
         if (submittedPlayers === playersData.length && submittedPlayers > 0) {
+          console.log("All players have submitted, updating room status to playing");
           const { error: updateError } = await supabase
             .from("rooms")
             .update({ status: "playing" })
@@ -100,15 +102,15 @@ const Room = () => {
       fetchRoom();
     }
 
-    // Subscribe to real-time updates for players and room status
-    const channel = supabase
-      .channel("room_changes")
+    // Subscribe to real-time updates for players
+    const playersChannel = supabase
+      .channel('players_changes')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "players",
+          event: '*',
+          schema: 'public',
+          table: 'players',
           filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
@@ -122,12 +124,12 @@ const Room = () => {
 
           if (playersData) {
             setPlayers(playersData);
-            const submittedCount = playersData.filter(p => p.has_submitted).length;
-            console.log(`Submitted count: ${submittedCount}/${playersData.length}`);
-            setSubmittedCount(submittedCount);
+            const newSubmittedCount = playersData.filter(p => p.has_submitted).length;
+            console.log(`Updated submitted count: ${newSubmittedCount}/${playersData.length}`);
+            setSubmittedCount(newSubmittedCount);
 
             // If all players have submitted, start the game
-            if (submittedCount === playersData.length && submittedCount > 0) {
+            if (newSubmittedCount === playersData.length && newSubmittedCount > 0) {
               console.log("All players have submitted, starting game...");
               const { error: updateError } = await supabase
                 .from("rooms")
@@ -152,39 +154,31 @@ const Room = () => {
           }
         }
       )
+      .subscribe();
+
+    // Subscribe to room status changes
+    const roomChannel = supabase
+      .channel('room_changes')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "UPDATE",
-          schema: "public",
-          table: "rooms",
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'rooms',
           filter: `id=eq.${roomId}`,
         },
         (payload) => {
           console.log("Room status changed:", payload.new.status);
-          if (payload.new.status !== roomStatus) {
-            setRoomStatus(payload.new.status);
-          }
+          setRoomStatus(payload.new.status);
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(playersChannel);
+      supabase.removeChannel(roomChannel);
     };
-  }, [code, navigate, roomId, toast, roomStatus]);
-
-  const handleNextRound = () => {
-    if (remainingActions.length > 0) {
-      setRemainingActions((current) => current.slice(1));
-    } else {
-      toast({
-        title: "Partie terminée !",
-        description: "Toutes les actions ont été réalisées.",
-      });
-      navigate("/");
-    }
-  };
+  }, [code, navigate, roomId, toast]);
 
   const handleStartGame = async () => {
     try {
@@ -205,6 +199,18 @@ const Room = () => {
         title: "Erreur",
         description: "Impossible de démarrer la partie.",
       });
+    }
+  };
+
+  const handleNextRound = () => {
+    if (remainingActions.length > 0) {
+      setRemainingActions((current) => current.slice(1));
+    } else {
+      toast({
+        title: "Partie terminée !",
+        description: "Toutes les actions ont été réalisées.",
+      });
+      navigate("/");
     }
   };
 
