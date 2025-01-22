@@ -137,7 +137,14 @@ const Room = () => {
   }, [code, navigate, roomId, toast, roomStatus, players]);
 
   const startGame = async () => {
-    if (!roomId) return;
+    if (!roomId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de démarrer la partie : ID de salle manquant.",
+      });
+      return;
+    }
     
     try {
       const { error } = await supabase
@@ -162,32 +169,53 @@ const Room = () => {
   };
 
   const onSubmit = async (values: { actions: string[] }) => {
-    if (!currentPlayerId || !roomId) {
+    if (!currentPlayerId) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission des actions.",
+        description: "ID du joueur manquant. Veuillez rafraîchir la page.",
+      });
+      return;
+    }
+
+    if (!roomId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "ID de la salle manquant. Veuillez rafraîchir la page.",
       });
       return;
     }
 
     try {
-      const promises = values.actions.map((action) =>
-        supabase
-          .from("player_actions")
-          .insert({ 
-            player_id: currentPlayerId, 
-            action_text: action,
-            room_id: roomId 
-          })
+      // Insert all actions and collect any errors
+      const results = await Promise.all(
+        values.actions.map((action) =>
+          supabase
+            .from("player_actions")
+            .insert({ 
+              player_id: currentPlayerId, 
+              action_text: action,
+              room_id: roomId 
+            })
+            .select()
+        )
       );
 
-      await Promise.all(promises);
+      // Check if any insertion failed
+      const errors = results.filter(result => result.error);
+      if (errors.length > 0) {
+        console.error("Errors inserting actions:", errors);
+        throw new Error("Une ou plusieurs actions n'ont pas pu être enregistrées");
+      }
 
-      await supabase
+      // Update player status
+      const { error: playerError } = await supabase
         .from("players")
         .update({ has_submitted: true })
         .eq("id", currentPlayerId);
+
+      if (playerError) throw playerError;
 
       toast({
         title: "Actions soumises !",
@@ -198,7 +226,7 @@ const Room = () => {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de soumettre vos actions.",
+        description: error instanceof Error ? error.message : "Impossible de soumettre vos actions.",
       });
     }
   };
