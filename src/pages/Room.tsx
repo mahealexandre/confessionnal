@@ -22,7 +22,6 @@ const Room = () => {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        // Fetch room data
         const { data: room, error: roomError } = await supabase
           .from("rooms")
           .select()
@@ -34,11 +33,9 @@ const Room = () => {
         setRoomId(room.id);
         setRoomStatus(room.status);
 
-        // Get stored username
         const storedUsername = localStorage.getItem('username');
         console.log("Stored username:", storedUsername);
 
-        // Fetch players in room
         const { data: playersData, error: playersError } = await supabase
           .from("players")
           .select()
@@ -48,7 +45,6 @@ const Room = () => {
 
         setPlayers(playersData);
         
-        // Find the player with matching username
         const currentPlayer = playersData.find(p => p.username === storedUsername);
         
         if (currentPlayer) {
@@ -57,7 +53,6 @@ const Room = () => {
           setCurrentPlayerId(currentPlayer.id);
         }
 
-        // Count submitted players and check if game should start
         const submittedPlayers = playersData.filter(p => p.has_submitted).length;
         console.log("Initial submitted count:", submittedPlayers);
         setSubmittedCount(submittedPlayers);
@@ -73,7 +68,6 @@ const Room = () => {
           setRoomStatus("playing");
         }
 
-        // Only fetch actions if room is in playing state
         if (room.status === "playing") {
           const { data: actionsData, error: actionsError } = await supabase
             .from("player_actions")
@@ -102,7 +96,7 @@ const Room = () => {
       fetchRoom();
     }
 
-    // Subscribe to real-time updates for players
+    // Enable REPLICA IDENTITY FULL for the players table to ensure complete row data
     const playersChannel = supabase
       .channel('players_changes')
       .on(
@@ -111,12 +105,12 @@ const Room = () => {
           event: '*',
           schema: 'public',
           table: 'players',
-          filter: `room_id=eq.${roomId}`,
         },
         async (payload) => {
           console.log("Players change detected:", payload);
           
-          // Fetch all players to get the latest state
+          if (!roomId) return;
+
           const { data: playersData } = await supabase
             .from("players")
             .select()
@@ -128,7 +122,6 @@ const Room = () => {
             console.log(`Updated submitted count: ${newSubmittedCount}/${playersData.length}`);
             setSubmittedCount(newSubmittedCount);
 
-            // If all players have submitted, start the game
             if (newSubmittedCount === playersData.length && newSubmittedCount > 0) {
               console.log("All players have submitted, starting game...");
               const { error: updateError } = await supabase
@@ -139,7 +132,6 @@ const Room = () => {
               if (!updateError) {
                 setRoomStatus("playing");
                 
-                // Fetch actions for the game
                 const { data: actionsData } = await supabase
                   .from("player_actions")
                   .select()
@@ -156,7 +148,6 @@ const Room = () => {
       )
       .subscribe();
 
-    // Subscribe to room status changes
     const roomChannel = supabase
       .channel('room_changes')
       .on(
