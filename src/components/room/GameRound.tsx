@@ -76,13 +76,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         .upsert({
           room_id: randomPlayer.room_id,
           current_player_id: randomPlayer.id,
-          current_action_id: randomAction.id
+          current_action_id: randomAction.id,
+          dialog_open: false // Add dialog state to game state
         })
         .then(({ error }) => {
           if (error) {
             console.error('Error updating game state:', error);
           }
-          // The selection will be handled by the game_state subscription
           isDrawingRef.current = false;
         });
     }
@@ -108,9 +108,9 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           if (player && action) {
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
-            // Show dialog after animation completes
+            // Show dialog after animation completes, based on game state
             setTimeout(() => {
-              setShowDialog(true);
+              setShowDialog(newState.dialog_open ?? false);
             }, 3000);
           }
         }
@@ -129,11 +129,26 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         setUsedActionIds(prev => [...prev, currentAction.id]);
       }
 
+      // First, close the dialog for all players
+      const { error: dialogError } = await supabase
+        .from('game_state')
+        .update({
+          dialog_open: false
+        })
+        .eq('room_id', selectedPlayer.room_id);
+
+      if (dialogError) {
+        console.error('Error updating dialog state:', dialogError);
+        return;
+      }
+
+      // Then reset the game state and prepare for next round
       const { error } = await supabase
         .from('game_state')
         .update({
           current_player_id: null,
-          current_action_id: null
+          current_action_id: null,
+          dialog_open: false
         })
         .eq('room_id', selectedPlayer.room_id);
 
@@ -158,7 +173,21 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             players={players}
             isSpinning={isSpinning}
             selectedPlayer={selectedPlayer}
-            onSpinComplete={() => setIsSpinning(false)}
+            onSpinComplete={() => {
+              setIsSpinning(false);
+              // Open dialog for all players after animation completes
+              if (selectedPlayer) {
+                supabase
+                  .from('game_state')
+                  .update({
+                    dialog_open: true
+                  })
+                  .eq('room_id', selectedPlayer.room_id)
+                  .then(({ error }) => {
+                    if (error) console.error('Error updating dialog state:', error);
+                  });
+              }
+            }}
           />
         </div>
 
