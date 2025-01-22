@@ -98,6 +98,7 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
 
       console.log("Actions inserted successfully");
 
+      // Update player's has_submitted status
       const { error: updateError } = await supabase
         .from("players")
         .update({ has_submitted: true })
