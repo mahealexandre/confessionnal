@@ -119,7 +119,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          if (newState.ready_count > 0) {
+          if (newState.ready_count > 0 && !isSpinning) {
             setIsSpinning(true);
           }
           
@@ -141,7 +141,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [players, actions]);
+  }, [players, actions, isSpinning]);
 
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
