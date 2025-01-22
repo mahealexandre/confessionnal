@@ -1,18 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { SpinningWheel } from "./SpinningWheel";
+import { SpinningWheelSection } from "./SpinningWheelSection";
+import { ActionDialog } from "./ActionDialog";
 
 interface GameRoundProps {
   players: Player[];
@@ -27,7 +19,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [selectedAction, setSelectedAction] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
-  const [readyCount, setReadyCount] = useState(0);
   const isDrawingRef = useRef(false);
   const hasInitializedRef = useRef(false);
 
@@ -128,6 +119,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
+          if (newState.ready_count > 0) {
+            setIsSpinning(true);
+          }
+          
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
           
@@ -139,8 +134,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
               setIsSpinning(false);
             }
           }
-
-          setReadyCount(newState.ready_count || 0);
         }
       )
       .subscribe();
@@ -148,51 +141,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [players, actions, isSpinning, showDialog]);
-
-  const handleChooseClick = async () => {
-    if (players.length === 0 || isSpinning || showDialog) return;
-    
-    const roomId = players[0].room_id;
-    
-    try {
-      const { data: currentState } = await supabase
-        .from('game_state')
-        .select('ready_count')
-        .eq('room_id', roomId)
-        .maybeSingle();
-
-      const currentCount = currentState?.ready_count || 0;
-      const newCount = currentCount + 1;
-
-      console.log('Updating ready count:', { currentCount, newCount });
-
-      if (newCount === players.length) {
-        setIsSpinning(true);
-      }
-
-      const { error: updateError } = await supabase
-        .from('game_state')
-        .update({ ready_count: newCount })
-        .eq('room_id', roomId);
-
-      if (updateError) {
-        console.error('Error updating ready count:', updateError);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de mettre à jour le compteur.",
-        });
-      }
-    } catch (error) {
-      console.error('Error in handleChooseClick:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue.",
-      });
-    }
-  };
+  }, [players, actions]);
 
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
@@ -218,7 +167,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setShowDialog(false);
       setIsSpinning(false);
-      setReadyCount(0);
       onNextRound();
     }
   };
@@ -226,51 +174,34 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
-            {selectedPlayer?.username || "..."}
-          </h1>
-          <SpinningWheel
-            players={players}
-            isSpinning={isSpinning}
-            selectedPlayer={selectedPlayer}
-            onSpinComplete={() => {
-              setIsSpinning(false);
-              if (selectedPlayer) {
-                supabase
-                  .from('game_state')
-                  .update({
-                    dialog_open: true
-                  })
-                  .eq('room_id', selectedPlayer.room_id)
-                  .then(({ error }) => {
-                    if (error) console.error('Error updating dialog state:', error);
-                  });
-              }
-            }}
-          />
-          <div className="mt-4">
-            <Button 
-              onClick={handleChooseClick}
-              disabled={isSpinning || showDialog}
-              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
-            >
-              Choisir
-            </Button>
-          </div>
-        </div>
+        <SpinningWheelSection
+          players={players}
+          isSpinning={isSpinning}
+          selectedPlayer={selectedPlayer}
+          showDialog={showDialog}
+          onSpinComplete={() => {
+            setIsSpinning(false);
+            if (selectedPlayer) {
+              supabase
+                .from('game_state')
+                .update({
+                  dialog_open: true
+                })
+                .eq('room_id', selectedPlayer.room_id)
+                .then(({ error }) => {
+                  if (error) console.error('Error updating dialog state:', error);
+                });
+            }
+          }}
+        />
 
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Action pour {selectedPlayer?.username}</DialogTitle>
-              <DialogDescription>{selectedAction}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button onClick={handleDoneClick}>Fait !</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ActionDialog
+          showDialog={showDialog}
+          selectedPlayer={selectedPlayer}
+          selectedAction={selectedAction}
+          onOpenChange={setShowDialog}
+          onDoneClick={handleDoneClick}
+        />
       </div>
     </div>
   );
