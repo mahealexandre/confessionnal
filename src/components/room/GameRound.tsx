@@ -128,9 +128,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          if (newState.ready_count === players.length && !isSpinning && !showDialog) {
-            setIsSpinning(true);
-          }
+          setIsSpinning(true);
           
           const player = players.find(p => p.id === newState.current_player_id);
           const action = actions.find(a => a.id === newState.current_action_id);
@@ -255,7 +253,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
               disabled={isSpinning || showDialog}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
             >
-              Choisir ({readyCount}/{players.length})
+              Choisir
             </Button>
           </div>
         </div>
