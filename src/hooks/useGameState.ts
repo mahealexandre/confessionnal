@@ -20,41 +20,23 @@ export const useGameState = (roomId: string | null) => {
     try {
       console.log("Starting game for room:", roomId);
       
-      const { data: room, error: roomError } = await supabase
+      const { error: updateError } = await supabase
         .from("rooms")
-        .select("status")
-        .eq("id", roomId)
-        .single();
+        .update({ status: "playing" })
+        .eq("id", roomId);
 
-      if (roomError) {
-        console.error("Error fetching room:", roomError);
-        throw roomError;
+      if (updateError) {
+        console.error("Error updating room status:", updateError);
+        throw updateError;
       }
 
-      console.log("Current room status:", room?.status);
+      console.log("Room status updated to playing");
 
-      if (room?.status === "waiting") {
-        const { error: updateError } = await supabase
-          .from("rooms")
-          .update({ status: "playing" })
-          .eq("id", roomId)
-          .select()
-          .single();
-
-        if (updateError) {
-          console.error("Error updating room status:", updateError);
-          throw updateError;
-        }
-
-        console.log("Room status updated to playing");
-
-        toast({
-          title: "Partie lancée !",
-          description: "Tous les joueurs peuvent maintenant saisir leurs actions.",
-        });
-      } else {
-        console.log("Room is already in status:", room?.status);
-      }
+      toast({
+        title: "Partie lancée !",
+        description: "Tous les joueurs peuvent maintenant saisir leurs actions.",
+      });
+      
     } catch (error) {
       console.error("Error starting game:", error);
       toast({

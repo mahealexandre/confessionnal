@@ -51,7 +51,7 @@ const Room = () => {
   }
 
   // Show game round when all players have submitted
-  if (roomStatus === "playing" && currentPlayer?.has_submitted) {
+  if (roomStatus === "playing" && players.every(p => p.has_submitted)) {
     return (
       <GameRound
         players={players}
@@ -61,13 +61,20 @@ const Room = () => {
     );
   }
 
-  // Fallback to waiting room
+  // Show waiting screen while other players submit their actions
   return (
-    <WaitingRoom 
-      code={code} 
-      players={players} 
-      onStartGame={startGame} 
-    />
+    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
+      <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+            En attente des autres joueurs
+          </h1>
+          <p className="text-gray-600">
+            {submittedCount} / {players.length} joueurs ont soumis leurs actions
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 
