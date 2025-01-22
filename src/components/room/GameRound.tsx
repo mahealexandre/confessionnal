@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface GameRoundProps {
   players: Player[];
@@ -22,6 +23,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedAction, setSelectedAction] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
+  const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
+  const isDrawingRef = useRef(false);
 
   useEffect(() => {
     const spinDuration = 3000;
@@ -37,38 +40,54 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       }
     };
 
-    spin();
+    // Prevent multiple draws from happening simultaneously
+    if (!isDrawingRef.current && isSpinning) {
+      isDrawingRef.current = true;
+      spin();
 
-    // When the spinning stops, select a random player and action
-    setTimeout(async () => {
-      setIsSpinning(false);
-      clearTimeout(spinTimer);
-      
-      const randomPlayer = players[Math.floor(Math.random() * players.length)];
-      const playerActions = actions.filter(
-        (action) => action.player_id === randomPlayer.id
-      );
-      const randomAction =
-        playerActions[Math.floor(Math.random() * playerActions.length)];
+      // When the spinning stops, select a random player and unused action
+      setTimeout(async () => {
+        setIsSpinning(false);
+        clearTimeout(spinTimer);
+        
+        const randomPlayer = players[Math.floor(Math.random() * players.length)];
+        const availableActions = actions.filter(
+          (action) => 
+            action.player_id === randomPlayer.id && 
+            !usedActionIds.includes(action.id)
+        );
 
-      if (!randomPlayer || !randomAction) return;
+        if (!randomPlayer || availableActions.length === 0) {
+          toast({
+            title: "Partie terminée !",
+            description: "Toutes les actions ont été réalisées.",
+          });
+          return;
+        }
 
-      // Update the game state in Supabase
-      const { error } = await supabase
-        .from('game_state')
-        .upsert({
-          room_id: randomPlayer.room_id,
-          current_player_id: randomPlayer.id,
-          current_action_id: randomAction.id
-        });
+        const randomAction = availableActions[
+          Math.floor(Math.random() * availableActions.length)
+        ];
 
-      if (error) {
-        console.error('Error updating game state:', error);
-      }
-    }, spinDuration);
+        // Update the game state in Supabase
+        const { error } = await supabase
+          .from('game_state')
+          .upsert({
+            room_id: randomPlayer.room_id,
+            current_player_id: randomPlayer.id,
+            current_action_id: randomAction.id
+          });
+
+        if (error) {
+          console.error('Error updating game state:', error);
+        }
+
+        isDrawingRef.current = false;
+      }, spinDuration);
+    }
 
     return () => clearTimeout(spinTimer);
-  }, [players, actions, isSpinning]);
+  }, [players, actions, isSpinning, usedActionIds]);
 
   // Subscribe to game state changes
   useEffect(() => {
@@ -94,9 +113,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedAction(action.action_text);
             setShowDialog(true);
           } else {
-            // Si pas de joueur ou d'action sélectionnée, on ferme le dialog
             setShowDialog(false);
-            // Et on relance un nouveau tirage
             setIsSpinning(true);
           }
         }
@@ -109,8 +126,14 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   }, [players, actions]);
 
   const handleDoneClick = async () => {
-    // Quand on clique sur "Fait!", on reset l'état du jeu
-    if (selectedPlayer) {
+    if (selectedPlayer && selectedAction) {
+      // Mark the current action as used
+      const currentAction = actions.find(a => a.action_text === selectedAction);
+      if (currentAction) {
+        setUsedActionIds(prev => [...prev, currentAction.id]);
+      }
+
+      // Reset game state in Supabase
       const { error } = await supabase
         .from('game_state')
         .update({
@@ -122,7 +145,17 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       if (error) {
         console.error('Error resetting game state:', error);
       }
+
+      // Check if all actions have been used
+      const remainingActions = actions.filter(action => !usedActionIds.includes(action.id));
+      if (remainingActions.length === 0) {
+        toast({
+          title: "Partie terminée !",
+          description: "Toutes les actions ont été réalisées.",
+        });
+      }
     }
+    
     setShowDialog(false);
     onNextRound();
   };
