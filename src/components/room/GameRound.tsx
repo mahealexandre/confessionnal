@@ -116,7 +116,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   }, [players]);
 
   useEffect(() => {
-    console.log('Setting up game state subscription');
     const channel = supabase
       .channel('game_state_changes')
       .on(
@@ -131,7 +130,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           const newState = payload.new as any;
           
           if (newState.ready_count === players.length && !isSpinning && !showDialog) {
-            console.log('All players ready, starting spin');
             setIsSpinning(true);
             hasClickedRef.current = false;
           }
@@ -149,25 +147,19 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           }
 
           setReadyCount(newState.ready_count || 0);
-          console.log('Updated ready count:', newState.ready_count);
         }
       )
       .subscribe();
 
     return () => {
-      console.log('Cleaning up game state subscription');
       supabase.removeChannel(channel);
     };
   }, [players, actions, isSpinning, showDialog]);
 
   const handleChooseClick = async () => {
-    if (players.length === 0 || hasClickedRef.current) {
-      console.log('Cannot choose: no players or already clicked');
-      return;
-    }
+    if (players.length === 0 || hasClickedRef.current) return;
     
     const roomId = players[0].room_id;
-    console.log('Handling choose click for room:', roomId);
     
     try {
       const { data: currentState } = await supabase
@@ -178,7 +170,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       const currentCount = currentState?.ready_count || 0;
       const newCount = currentCount + 1;
-      console.log('Current count:', currentCount, 'New count:', newCount);
 
       const { error: updateError } = await supabase
         .from('game_state')
@@ -194,7 +185,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         });
       } else {
         hasClickedRef.current = true;
-        console.log('Successfully updated ready count');
       }
     } catch (error) {
       console.error('Error in handleChooseClick:', error);
@@ -207,7 +197,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   };
 
   const handleDoneClick = async () => {
-    console.log('Handling done click');
     if (selectedPlayer && selectedAction) {
       const currentAction = actions.find(a => a.action_text === selectedAction);
       if (currentAction) {
@@ -229,7 +218,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      console.log('Resetting state after done click');
       setShowDialog(false);
       setIsSpinning(false);
       hasClickedRef.current = false;
