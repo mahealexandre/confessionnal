@@ -77,7 +77,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           room_id: randomPlayer.room_id,
           current_player_id: randomPlayer.id,
           current_action_id: randomAction.id,
-          dialog_open: false // Add dialog state to game state
+          dialog_open: false
         })
         .then(({ error }) => {
           if (error) {

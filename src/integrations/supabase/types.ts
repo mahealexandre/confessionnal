@@ -14,6 +14,7 @@ export type Database = {
           created_at: string
           current_action_id: string | null
           current_player_id: string | null
+          dialog_open: boolean | null
           id: string
           room_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           created_at?: string
           current_action_id?: string | null
           current_player_id?: string | null
+          dialog_open?: boolean | null
           id?: string
           room_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           created_at?: string
           current_action_id?: string | null
           current_player_id?: string | null
+          dialog_open?: boolean | null
           id?: string
           room_id?: string
         }
