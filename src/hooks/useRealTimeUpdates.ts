@@ -16,6 +16,20 @@ export const useRealTimeUpdates = (
   useEffect(() => {
     if (!roomId) return;
 
+    // Initial fetch of players
+    const fetchPlayers = async () => {
+      const { data: initialPlayers } = await supabase
+        .from("players")
+        .select("*")
+        .eq("room_id", roomId);
+      
+      if (initialPlayers) {
+        setPlayers(initialPlayers);
+      }
+    };
+
+    fetchPlayers();
+
     const channel = supabase
       .channel("room_changes")
       .on(
@@ -27,6 +41,8 @@ export const useRealTimeUpdates = (
           filter: `room_id=eq.${roomId}`,
         },
         (payload) => {
+          console.log("Player change detected:", payload);
+
           if (payload.eventType === "INSERT") {
             const newPlayer = payload.new as Player;
             const updatedPlayers = [...players, newPlayer];
@@ -43,7 +59,6 @@ export const useRealTimeUpdates = (
             );
             setPlayers(updatedPlayers);
 
-            // Check if all players have submitted their actions
             if (updatedPlayers.every((p) => p.has_submitted) && roomStatus === "playing") {
               onAllPlayersSubmitted();
             }
