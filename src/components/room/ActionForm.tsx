@@ -22,6 +22,7 @@ interface ActionFormProps {
 export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
@@ -31,7 +32,7 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
   });
 
   const handleSubmit = async (values: ActionFormValues) => {
-    if (isSubmitting) return; // Prevent double submission
+    if (isSubmitting) return;
     
     try {
       setIsSubmitting(true);
@@ -108,21 +109,7 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
       }
 
       console.log("Player status updated successfully");
-
-      // Check if all players have submitted
-      const newSubmittedCount = submittedCount + 1;
-      if (newSubmittedCount >= totalPlayers) {
-        // Update room status to playing
-        const { error: roomUpdateError } = await supabase
-          .from("rooms")
-          .update({ status: "playing" })
-          .eq("id", roomId);
-
-        if (roomUpdateError) {
-          console.error("Error updating room status:", roomUpdateError);
-          throw roomUpdateError;
-        }
-      }
+      setHasSubmitted(true);
 
       toast({
         title: "Actions soumises !",
@@ -140,6 +127,40 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
     }
   };
 
+  const startGame = async () => {
+    try {
+      const roomCode = window.location.pathname.split('/').pop();
+      const { data: roomData, error: roomError } = await supabase
+        .from("rooms")
+        .select("id")
+        .eq("code", roomCode)
+        .single();
+
+      if (roomError) throw roomError;
+
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ status: "playing" })
+        .eq("id", roomData.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "La partie commence !",
+        description: "Tous les joueurs ont soumis leurs actions.",
+      });
+    } catch (error) {
+      console.error("Error starting game:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de démarrer la partie.",
+      });
+    }
+  };
+
+  const allPlayersSubmitted = submittedCount >= totalPlayers;
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
@@ -152,31 +173,46 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
           </p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {form.watch("actions").map((_, index) => (
-              <FormField
-                key={index}
-                control={form.control}
-                name={`actions.${index}`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder={`Action ${index + 1}`} {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            ))}
+        {!hasSubmitted ? (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              {form.watch("actions").map((_, index) => (
+                <FormField
+                  key={index}
+                  control={form.control}
+                  name={`actions.${index}`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder={`Action ${index + 1}`} {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              ))}
+              <Button
+                type="submit"
+                className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Envoi en cours..." : "Suivant"}
+              </Button>
+            </form>
+          </Form>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-center text-gray-600">
+              Vos actions ont été enregistrées. En attente des autres joueurs...
+            </p>
             <Button
-              type="submit"
+              onClick={startGame}
               className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-white"
-              disabled={isSubmitting}
+              disabled={!allPlayersSubmitted}
             >
-              {isSubmitting ? "Envoi en cours..." : "Suivant"}
+              {allPlayersSubmitted ? "Commencer" : "En attente des autres joueurs..."}
             </Button>
-          </form>
-        </Form>
+          </div>
+        )}
       </div>
     </div>
   );
