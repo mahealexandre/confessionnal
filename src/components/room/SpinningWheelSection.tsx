@@ -1,8 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { SpinningWheel } from "./SpinningWheel";
 import { Player } from "@/types/game";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 interface SpinningWheelSectionProps {
   players: Player[];
@@ -14,64 +12,41 @@ interface SpinningWheelSectionProps {
 
 export const SpinningWheelSection = ({
   players,
-  isSpinning,
   selectedPlayer,
-  showDialog,
   onSpinComplete,
 }: SpinningWheelSectionProps) => {
   const handleChooseClick = async () => {
-    if (players.length === 0 || isSpinning || showDialog) return;
-    
-    const roomId = players[0].room_id;
-    
-    try {
-      const { error: updateError } = await supabase
-        .from('game_state')
-        .update({ 
-          ready_count: 1,
-          current_player_id: null,
-          current_action_id: null,
-          dialog_open: false
-        })
-        .eq('room_id', roomId);
+    const roomId = players[0]?.room_id;
+    if (!roomId) return;
 
-      if (updateError) {
-        console.error('Error updating ready count:', updateError);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de mettre à jour le compteur.",
-        });
-      }
-    } catch (error) {
-      console.error('Error in handleChooseClick:', error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue.",
-      });
-    }
+    const { data: gameState } = await supabase
+      .from("game_state")
+      .select("ready_count")
+      .eq("room_id", roomId)
+      .single();
+
+    const newReadyCount = (gameState?.ready_count || 0) + 1;
+
+    await supabase
+      .from("game_state")
+      .update({ ready_count: newReadyCount })
+      .eq("room_id", roomId);
   };
 
   return (
-    <div className="text-center space-y-4">
-      <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
-        {selectedPlayer?.username || "..."}
-      </h1>
-      <SpinningWheel
-        players={players}
-        isSpinning={isSpinning}
-        selectedPlayer={selectedPlayer}
-        onSpinComplete={onSpinComplete}
-      />
-      <div className="mt-4">
-        <Button 
+    <div className="space-y-8">
+      <div className="flex flex-col items-center justify-center space-y-4">
+        <Button
           onClick={handleChooseClick}
-          disabled={isSpinning || showDialog}
-          className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+          className="bg-[#F97316] hover:bg-[#EA580C] transition-colors"
         >
           Choisir
         </Button>
+        {selectedPlayer && (
+          <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow">
+            {selectedPlayer.username}
+          </div>
+        )}
       </div>
     </div>
   );
