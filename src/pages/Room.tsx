@@ -188,9 +188,6 @@ const Room = () => {
     setSubmittedCount(submittedPlayers);
   }, [players]);
 
-  const currentPlayer = players.find((p) => p.id === currentPlayerId);
-  const isHost = currentPlayer?.is_host;
-
   if (roomStatus === "waiting") {
     return (
       <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
@@ -232,16 +229,14 @@ const Room = () => {
             </div>
           </div>
 
-          {isHost && (
-            <div className="flex justify-center">
-              <Button
-                onClick={startGame}
-                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
-              >
-                Lancer la partie
-              </Button>
-            </div>
-          )}
+          <div className="flex justify-center">
+            <Button
+              onClick={startGame}
+              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+            >
+              Lancer la partie
+            </Button>
+          </div>
         </div>
       </div>
     );
