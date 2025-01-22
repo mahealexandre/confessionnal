@@ -3,4 +3,5 @@ export interface Player {
   username: string;
   is_host: boolean;
   has_submitted?: boolean;
+  room_id: string;
 }
