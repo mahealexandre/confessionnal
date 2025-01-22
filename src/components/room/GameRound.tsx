@@ -129,9 +129,9 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          if (newState.ready_count === players.length && !isSpinning) {
+          if (newState.ready_count === players.length && !isSpinning && !showDialog) {
             setIsSpinning(true);
-            hasClickedRef.current = false; // Reset the click state when spinning starts
+            hasClickedRef.current = false;
           }
           
           const player = players.find(p => p.id === newState.current_player_id);
@@ -142,6 +142,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedAction(action.action_text);
             if (newState.dialog_open) {
               setShowDialog(true);
+              setIsSpinning(false); // Stop spinning when dialog opens
             }
           }
 
@@ -153,7 +154,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [players, actions, isSpinning]);
+  }, [players, actions, isSpinning, showDialog]);
 
   const handleChooseClick = async () => {
     if (players.length === 0 || hasClickedRef.current) return;
@@ -183,7 +184,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           description: "Impossible de mettre à jour le compteur.",
         });
       } else {
-        hasClickedRef.current = true; // Mark that this client has clicked
+        hasClickedRef.current = true;
       }
     } catch (error) {
       console.error('Error in handleChooseClick:', error);
@@ -219,7 +220,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setShowDialog(false);
       setIsSpinning(false);
-      hasClickedRef.current = false; // Reset the click state when the round is done
+      hasClickedRef.current = false;
       onNextRound();
     }
   };
@@ -253,7 +254,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           <div className="mt-4">
             <Button 
               onClick={handleChooseClick}
-              disabled={isSpinning || hasClickedRef.current}
+              disabled={isSpinning || hasClickedRef.current || showDialog}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
             >
               Choisir ({readyCount}/{players.length})
