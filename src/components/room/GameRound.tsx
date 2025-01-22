@@ -50,46 +50,41 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (!isDrawingRef.current && isSpinning) {
       isDrawingRef.current = true;
 
-      setTimeout(async () => {
-        setIsSpinning(false);
-        
-        // Filter out used actions before selecting a random one
-        const availableActions = actions.filter(action => !usedActionIds.includes(action.id));
-        
-        if (availableActions.length === 0) {
-          toast({
-            title: "Partie terminée !",
-            description: "Toutes les actions ont été réalisées.",
-          });
-          await cleanupGame();
-          return;
-        }
+      // Filter out used actions before selecting a random one
+      const availableActions = actions.filter(action => !usedActionIds.includes(action.id));
+      
+      if (availableActions.length === 0) {
+        toast({
+          title: "Partie terminée !",
+          description: "Toutes les actions ont été réalisées.",
+        });
+        cleanupGame();
+        return;
+      }
 
-        const randomAction = availableActions[
-          Math.floor(Math.random() * availableActions.length)
-        ];
+      const randomAction = availableActions[Math.floor(Math.random() * availableActions.length)];
+      const randomPlayer = players.find(p => p.id === randomAction.player_id);
 
-        const randomPlayer = players.find(p => p.id === randomAction.player_id);
+      if (!randomPlayer) {
+        console.error('Player not found for action:', randomAction);
+        return;
+      }
 
-        if (!randomPlayer) {
-          console.error('Player not found for action:', randomAction);
-          return;
-        }
-
-        const { error } = await supabase
-          .from('game_state')
-          .upsert({
-            room_id: randomPlayer.room_id,
-            current_player_id: randomPlayer.id,
-            current_action_id: randomAction.id
-          });
-
-        if (error) {
-          console.error('Error updating game state:', error);
-        }
-
-        isDrawingRef.current = false;
-      }, 3000);
+      // Update game state in Supabase to synchronize across all clients
+      supabase
+        .from('game_state')
+        .upsert({
+          room_id: randomPlayer.room_id,
+          current_player_id: randomPlayer.id,
+          current_action_id: randomAction.id
+        })
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error updating game state:', error);
+          }
+          // The selection will be handled by the game_state subscription
+          isDrawingRef.current = false;
+        });
     }
   }, [players, actions, isSpinning, usedActionIds, navigate]);
 
@@ -113,7 +108,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           if (player && action) {
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
-            setShowDialog(true);
+            // Show dialog after animation completes
+            setTimeout(() => {
+              setShowDialog(true);
+            }, 3000);
           }
         }
       )
