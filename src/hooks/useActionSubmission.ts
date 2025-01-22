@@ -1,40 +1,43 @@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useActionSubmission = (currentPlayerId: string | null, roomId: string | null) => {
+export const useActionSubmission = (currentPlayerId: string | null, roomCode: string | null) => {
   const { toast } = useToast();
 
   const submitActions = async (values: { actions: string[] }) => {
-    if (!currentPlayerId || !roomId) {
+    if (!currentPlayerId || !roomCode) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "ID du joueur ou de la salle manquant. Veuillez rafraîchir la page.",
+        description: "ID du joueur ou code de la salle manquant. Veuillez rafraîchir la page.",
       });
       return;
     }
 
     try {
-      // Insert all actions and collect any errors
-      const results = await Promise.all(
-        values.actions.map((action) =>
-          supabase
-            .from("player_actions")
-            .insert({
-              player_id: currentPlayerId,
-              action_text: action,
-              room_id: roomId,
-            })
-            .select()
-        )
-      );
+      // First get the room UUID from the code
+      const { data: room, error: roomError } = await supabase
+        .from("rooms")
+        .select("id")
+        .eq("code", roomCode)
+        .maybeSingle();
 
-      // Check if any insertion failed
-      const errors = results.filter((result) => result.error);
-      if (errors.length > 0) {
-        console.error("Errors inserting actions:", errors);
-        throw new Error("Une ou plusieurs actions n'ont pas pu être enregistrées");
-      }
+      if (roomError) throw roomError;
+      if (!room) throw new Error("Salle introuvable");
+
+      // Insert all actions using the room UUID
+      const { data: actionsData, error: actionsError } = await supabase
+        .from("player_actions")
+        .insert(
+          values.actions.map((action) => ({
+            player_id: currentPlayerId,
+            action_text: action,
+            room_id: room.id,
+          }))
+        )
+        .select();
+
+      if (actionsError) throw actionsError;
 
       // Update player status
       const { error: playerError } = await supabase
