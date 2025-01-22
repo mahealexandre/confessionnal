@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const actionSchema = z.object({
   actions: z.array(z.string().min(1, "Action is required")).length(5),
@@ -18,12 +20,35 @@ interface ActionFormProps {
 }
 
 export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFormProps) => {
+  const { toast } = useToast();
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
     defaultValues: {
       actions: ["", "", "", "", ""],
     },
   });
+
+  const handleSubmit = async (values: ActionFormValues) => {
+    try {
+      // Log the values being submitted
+      console.log("Submitting actions:", values);
+      
+      // Call the parent component's onSubmit
+      await onSubmit(values);
+
+      toast({
+        title: "Actions soumises !",
+        description: "Vos actions ont été enregistrées avec succès.",
+      });
+    } catch (error) {
+      console.error("Error submitting actions:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la soumission des actions.",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
@@ -38,7 +63,7 @@ export const ActionForm = ({ onSubmit, submittedCount, totalPlayers }: ActionFor
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {form.watch("actions").map((_, index) => (
               <FormField
                 key={index}

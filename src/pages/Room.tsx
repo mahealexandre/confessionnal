@@ -89,25 +89,12 @@ const Room = () => {
         (payload) => {
           if (payload.eventType === "INSERT") {
             setPlayers((current) => [...current, payload.new as Player]);
-            toast({
-              title: "Nouveau joueur",
-              description: `${payload.new.username} a rejoint la salle !`,
-            });
           } else if (payload.eventType === "UPDATE") {
             setPlayers((current) =>
               current.map((player) =>
                 player.id === payload.new.id ? { ...player, ...payload.new } : player
               )
             );
-
-            const updatedPlayers = players.map((player) =>
-              player.id === payload.new.id ? { ...player, ...payload.new } : player
-            );
-            const allSubmitted = updatedPlayers.every((p) => p.has_submitted);
-            
-            if (allSubmitted && roomStatus === "playing") {
-              startGame();
-            }
           } else if (payload.eventType === "DELETE") {
             setPlayers((current) =>
               current.filter((player) => player.id !== payload.old.id)
@@ -134,7 +121,7 @@ const Room = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [code, navigate, roomId, toast, roomStatus, players]);
+  }, [code, navigate, roomId, toast, roomStatus]);
 
   const startGame = async () => {
     if (!roomId) return;
@@ -163,6 +150,7 @@ const Room = () => {
 
   const onSubmit = async (values: { actions: string[] }) => {
     if (!currentPlayerId || !roomId) {
+      console.error("Missing currentPlayerId or roomId:", { currentPlayerId, roomId });
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -172,33 +160,45 @@ const Room = () => {
     }
 
     try {
-      const promises = values.actions.map((action) =>
-        supabase
-          .from("player_actions")
-          .insert({ 
-            player_id: currentPlayerId, 
-            action_text: action,
-            room_id: roomId 
-          })
-      );
+      console.log("Submitting actions for player:", currentPlayerId);
+      console.log("Room ID:", roomId);
+      console.log("Actions:", values.actions);
 
-      await Promise.all(promises);
+      const actionsToInsert = values.actions.map(action => ({
+        player_id: currentPlayerId,
+        room_id: roomId,
+        action_text: action
+      }));
 
-      await supabase
+      const { error } = await supabase
+        .from("player_actions")
+        .insert(actionsToInsert);
+
+      if (error) {
+        console.error("Error inserting actions:", error);
+        throw error;
+      }
+
+      const { error: updateError } = await supabase
         .from("players")
         .update({ has_submitted: true })
         .eq("id", currentPlayerId);
+
+      if (updateError) {
+        console.error("Error updating player status:", updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Actions soumises !",
         description: "Vos actions ont été enregistrées avec succès.",
       });
     } catch (error) {
-      console.error("Error submitting actions:", error);
+      console.error("Error in onSubmit:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de soumettre vos actions.",
+        description: "Une erreur est survenue lors de la soumission des actions.",
       });
     }
   };
