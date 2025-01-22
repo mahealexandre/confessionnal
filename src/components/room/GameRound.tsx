@@ -131,7 +131,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedAction(action.action_text);
             if (newState.dialog_open) {
               setShowDialog(true);
-              setIsSpinning(false);
+              setIsSpinning(false); // Set isSpinning to false when dialog opens
             }
           }
         }
@@ -180,7 +180,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           selectedPlayer={selectedPlayer}
           showDialog={showDialog}
           onSpinComplete={() => {
-            setIsSpinning(false);
+            setIsSpinning(false); // Set isSpinning to false when wheel stops
             if (selectedPlayer) {
               supabase
                 .from('game_state')
