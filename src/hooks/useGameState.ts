@@ -37,7 +37,9 @@ export const useGameState = (roomId: string | null) => {
         const { error: updateError } = await supabase
           .from("rooms")
           .update({ status: "playing" })
-          .eq("id", roomId);
+          .eq("id", roomId)
+          .select()
+          .single();
 
         if (updateError) {
           console.error("Error updating room status:", updateError);
