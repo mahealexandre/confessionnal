@@ -16,6 +16,7 @@ export type Database = {
           current_player_id: string | null
           dialog_open: boolean | null
           id: string
+          ready_count: number | null
           room_id: string
         }
         Insert: {
@@ -24,6 +25,7 @@ export type Database = {
           current_player_id?: string | null
           dialog_open?: boolean | null
           id?: string
+          ready_count?: number | null
           room_id: string
         }
         Update: {
@@ -32,6 +34,7 @@ export type Database = {
           current_player_id?: string | null
           dialog_open?: boolean | null
           id?: string
+          ready_count?: number | null
           room_id?: string
         }
         Relationships: [
@@ -103,6 +106,7 @@ export type Database = {
           has_submitted: boolean | null
           id: string
           is_host: boolean | null
+          ready_for_next_round: boolean | null
           room_id: string | null
           username: string
         }
@@ -111,6 +115,7 @@ export type Database = {
           has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
+          ready_for_next_round?: boolean | null
           room_id?: string | null
           username: string
         }
@@ -119,6 +124,7 @@ export type Database = {
           has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
+          ready_for_next_round?: boolean | null
           room_id?: string | null
           username?: string
         }

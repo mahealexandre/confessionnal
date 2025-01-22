@@ -22,26 +22,25 @@ interface GameRoundProps {
 
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
   const navigate = useNavigate();
-  const [isSpinning, setIsSpinning] = useState(true);
+  const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedAction, setSelectedAction] = useState<string>("");
   const [showDialog, setShowDialog] = useState(false);
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
+  const [readyCount, setReadyCount] = useState(0);
   const isDrawingRef = useRef(false);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
       const roomId = players[0].room_id;
       
-      // Delete all game data
       await Promise.all([
         supabase.from('game_state').delete().eq('room_id', roomId),
         supabase.from('player_actions').delete().eq('room_id', roomId),
         supabase.from('players').delete().eq('room_id', roomId),
-        supabase.from('rooms').delete().eq('id', roomId)
+        supabase.from('rooms').delete().eq('room_id', roomId)
       ]);
 
-      // Navigate to home
       navigate('/');
     }
   };
@@ -50,7 +49,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     if (!isDrawingRef.current && isSpinning) {
       isDrawingRef.current = true;
 
-      // Filter out used actions before selecting a random one
       const availableActions = actions.filter(action => !usedActionIds.includes(action.id));
       
       if (availableActions.length === 0) {
@@ -70,14 +68,14 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      // Update game state in Supabase to synchronize across all clients
       supabase
         .from('game_state')
         .upsert({
           room_id: randomPlayer.room_id,
           current_player_id: randomPlayer.id,
           current_action_id: randomAction.id,
-          dialog_open: false
+          dialog_open: false,
+          ready_count: 0
         })
         .then(({ error }) => {
           if (error) {
@@ -108,10 +106,14 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           if (player && action) {
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
-            // Show dialog after animation completes, based on game state
             setTimeout(() => {
               setShowDialog(newState.dialog_open ?? false);
             }, 3000);
+          }
+
+          setReadyCount(newState.ready_count || 0);
+          if (newState.ready_count === players.length) {
+            setIsSpinning(true);
           }
         }
       )
@@ -122,6 +124,28 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     };
   }, [players, actions]);
 
+  const handleChooseClick = async () => {
+    if (players.length === 0) return;
+    
+    const roomId = players[0].room_id;
+    const { data: gameState } = await supabase
+      .from('game_state')
+      .select('ready_count')
+      .eq('room_id', roomId)
+      .single();
+
+    const newCount = (gameState?.ready_count || 0) + 1;
+    
+    await supabase
+      .from('game_state')
+      .update({ ready_count: newCount })
+      .eq('room_id', roomId);
+
+    if (newCount === players.length) {
+      setIsSpinning(true);
+    }
+  };
+
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
       const currentAction = actions.find(a => a.action_text === selectedAction);
@@ -129,11 +153,11 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         setUsedActionIds(prev => [...prev, currentAction.id]);
       }
 
-      // First, close the dialog for all players
       const { error: dialogError } = await supabase
         .from('game_state')
         .update({
-          dialog_open: false
+          dialog_open: false,
+          ready_count: 0
         })
         .eq('room_id', selectedPlayer.room_id);
 
@@ -142,13 +166,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      // Then reset the game state and prepare for next round
       const { error } = await supabase
         .from('game_state')
         .update({
           current_player_id: null,
           current_action_id: null,
-          dialog_open: false
+          dialog_open: false,
+          ready_count: 0
         })
         .eq('room_id', selectedPlayer.room_id);
 
@@ -157,7 +181,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       }
 
       setShowDialog(false);
-      setIsSpinning(true);
+      setIsSpinning(false);
       onNextRound();
     }
   };
@@ -175,7 +199,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             selectedPlayer={selectedPlayer}
             onSpinComplete={() => {
               setIsSpinning(false);
-              // Open dialog for all players after animation completes
               if (selectedPlayer) {
                 supabase
                   .from('game_state')
@@ -189,6 +212,15 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
               }
             }}
           />
+          <div className="mt-4">
+            <Button 
+              onClick={handleChooseClick}
+              disabled={isSpinning}
+              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+            >
+              Choisir ({readyCount}/{players.length})
+            </Button>
+          </div>
         </div>
 
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
