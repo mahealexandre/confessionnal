@@ -37,15 +37,22 @@ const Index = () => {
       if (roomError) throw roomError;
 
       // Créer le joueur hôte
-      const { error: playerError } = await supabase
+      const { data: player, error: playerError } = await supabase
         .from("players")
         .insert([{ 
           room_id: room.id,
           username,
           is_host: true
-        }]);
+        }])
+        .select()
+        .single();
 
       if (playerError) throw playerError;
+
+      // Sauvegarder le username et le player_id
+      localStorage.setItem('username', username);
+      localStorage.setItem(`player_id_${room.id}`, player.id);
+      console.log("Created player with ID:", player.id);
 
       navigate(`/room/${room.code}`);
     } catch (error) {
@@ -78,15 +85,22 @@ const Index = () => {
 
       if (roomError) throw roomError;
 
-      // Ajouter le joueur à la salle
-      const { error: playerError } = await supabase
+      // Créer le joueur
+      const { data: player, error: playerError } = await supabase
         .from("players")
         .insert([{ 
           room_id: room.id,
           username
-        }]);
+        }])
+        .select()
+        .single();
 
       if (playerError) throw playerError;
+
+      // Sauvegarder le username et le player_id
+      localStorage.setItem('username', username);
+      localStorage.setItem(`player_id_${room.id}`, player.id);
+      console.log("Created player with ID:", player.id);
 
       navigate(`/room/${room.code}`);
     } catch (error) {
