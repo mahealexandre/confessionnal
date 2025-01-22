@@ -196,13 +196,41 @@ const Room = () => {
     }
   };
 
+  const handleStartGame = async () => {
+    try {
+      if (!roomId) return;
+
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ status: "submitting" })
+        .eq("id", roomId);
+
+      if (updateError) throw updateError;
+
+      setRoomStatus("submitting");
+    } catch (error) {
+      console.error("Error starting game:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de démarrer la partie.",
+      });
+    }
+  };
+
   const currentPlayer = players.find((p) => p.id === currentPlayerId);
 
   if (roomStatus === "waiting") {
-    return <WaitingRoom code={code || ""} players={players} onStartGame={() => {}} />;
+    return (
+      <WaitingRoom 
+        code={code || ""} 
+        players={players} 
+        onStartGame={handleStartGame}
+      />
+    );
   }
 
-  if (roomStatus === "playing" && !currentPlayer?.has_submitted) {
+  if (roomStatus === "submitting" && !currentPlayer?.has_submitted) {
     return (
       <ActionForm
         submittedCount={submittedCount}
@@ -211,13 +239,17 @@ const Room = () => {
     );
   }
 
-  return (
-    <GameRound
-      players={players}
-      actions={remainingActions}
-      onNextRound={handleNextRound}
-    />
-  );
+  if (roomStatus === "playing") {
+    return (
+      <GameRound
+        players={players}
+        actions={remainingActions}
+        onNextRound={handleNextRound}
+      />
+    );
+  }
+
+  return null;
 };
 
 export default Room;
