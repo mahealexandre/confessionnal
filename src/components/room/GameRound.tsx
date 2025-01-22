@@ -30,7 +30,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [readyCount, setReadyCount] = useState(0);
   const isDrawingRef = useRef(false);
   const hasInitializedRef = useRef(false);
-  const hasClickedRef = useRef(false);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
@@ -131,7 +130,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           
           if (newState.ready_count === players.length && !isSpinning && !showDialog) {
             setIsSpinning(true);
-            hasClickedRef.current = false;
           }
           
           const player = players.find(p => p.id === newState.current_player_id);
@@ -157,7 +155,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   }, [players, actions, isSpinning, showDialog]);
 
   const handleChooseClick = async () => {
-    if (players.length === 0 || hasClickedRef.current) return;
+    if (players.length === 0 || isSpinning || showDialog) return;
     
     const roomId = players[0].room_id;
     
@@ -171,6 +169,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       const currentCount = currentState?.ready_count || 0;
       const newCount = currentCount + 1;
 
+      console.log('Updating ready count:', { currentCount, newCount });
+
       const { error: updateError } = await supabase
         .from('game_state')
         .update({ ready_count: newCount })
@@ -183,8 +183,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           title: "Erreur",
           description: "Impossible de mettre à jour le compteur.",
         });
-      } else {
-        hasClickedRef.current = true;
       }
     } catch (error) {
       console.error('Error in handleChooseClick:', error);
@@ -220,7 +218,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setShowDialog(false);
       setIsSpinning(false);
-      hasClickedRef.current = false;
       setReadyCount(0);
       onNextRound();
     }
@@ -255,7 +252,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           <div className="mt-4">
             <Button 
               onClick={handleChooseClick}
-              disabled={isSpinning || hasClickedRef.current || showDialog}
+              disabled={isSpinning || showDialog}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
             >
               Choisir ({readyCount}/{players.length})
