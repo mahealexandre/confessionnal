@@ -154,7 +154,6 @@ const Room = () => {
 
   const onSubmit = async (values: ActionFormValues) => {
     try {
-      // Insert actions
       const promises = values.actions.map((action) =>
         supabase
           .from("player_actions")
@@ -163,7 +162,6 @@ const Room = () => {
 
       await Promise.all(promises);
 
-      // Update player status
       await supabase
         .from("players")
         .update({ has_submitted: true })
@@ -187,6 +185,8 @@ const Room = () => {
     const submittedPlayers = players.filter((p) => p.has_submitted).length;
     setSubmittedCount(submittedPlayers);
   }, [players]);
+
+  const currentPlayer = players.find((p) => p.id === currentPlayerId);
 
   if (roomStatus === "waiting") {
     return (
