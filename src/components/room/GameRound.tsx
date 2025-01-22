@@ -51,13 +51,15 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       const randomAction =
         playerActions[Math.floor(Math.random() * playerActions.length)];
 
+      if (!randomPlayer || !randomAction) return;
+
       // Update the game state in Supabase
       const { error } = await supabase
         .from('game_state')
         .upsert({
           room_id: randomPlayer.room_id,
           current_player_id: randomPlayer.id,
-          current_action_id: randomAction?.id
+          current_action_id: randomAction.id
         });
 
       if (error) {
@@ -91,6 +93,11 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
             setShowDialog(true);
+          } else {
+            // Si pas de joueur ou d'action sélectionnée, on ferme le dialog
+            setShowDialog(false);
+            // Et on relance un nouveau tirage
+            setIsSpinning(true);
           }
         }
       )
@@ -100,6 +107,25 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       supabase.removeChannel(channel);
     };
   }, [players, actions]);
+
+  const handleDoneClick = async () => {
+    // Quand on clique sur "Fait!", on reset l'état du jeu
+    if (selectedPlayer) {
+      const { error } = await supabase
+        .from('game_state')
+        .update({
+          current_player_id: null,
+          current_action_id: null
+        })
+        .eq('room_id', selectedPlayer.room_id);
+
+      if (error) {
+        console.error('Error resetting game state:', error);
+      }
+    }
+    setShowDialog(false);
+    onNextRound();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
@@ -117,7 +143,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
               <DialogDescription>{selectedAction}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button onClick={onNextRound}>Fait !</Button>
+              <Button onClick={handleDoneClick}>Fait !</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
