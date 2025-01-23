@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { SpinningWheelSection } from "./SpinningWheelSection";
 import { ActionDialog } from "./ActionDialog";
+import { PlayerSlotMachine } from "./PlayerSlotMachine";
+import { GameStateManager } from "./GameStateManager";
 
 interface GameRoundProps {
   players: Player[];
@@ -62,7 +64,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       // First, show the selected player
       setSelectedPlayer(randomPlayer);
-      setIsSpinning(false);
 
       // Then, after 2 seconds, update the game state to open the dialog
       setTimeout(() => {
@@ -112,39 +113,19 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     initializeGameState();
   }, [players]);
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('game_state_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'game_state'
-        },
-        async (payload) => {
-          console.log('Game state changed:', payload);
-          const newState = payload.new as any;
-          
-          if (newState.ready_count > 0 && !selectedPlayer) {
-            setIsSpinning(true);
-          }
-          
-          const player = players.find(p => p.id === newState.current_player_id);
-          const action = actions.find(a => a.id === newState.current_action_id);
-          
-          if (player && action) {
-            setSelectedAction(action.action_text);
-            setShowDialog(newState.dialog_open);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [players, actions, selectedPlayer]);
+  const handleGameStateChange = (newState: any) => {
+    if (newState.ready_count > 0 && !selectedPlayer) {
+      setIsSpinning(true);
+    }
+    
+    const player = players.find(p => p.id === newState.current_player_id);
+    const action = actions.find(a => a.id === newState.current_action_id);
+    
+    if (player && action) {
+      setSelectedAction(action.action_text);
+      setShowDialog(newState.dialog_open);
+    }
+  };
 
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
@@ -188,12 +169,24 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           }}
         />
 
+        <PlayerSlotMachine
+          players={players}
+          isSpinning={isSpinning}
+          finalPlayer={selectedPlayer}
+          onSpinComplete={() => setIsSpinning(false)}
+        />
+
         <ActionDialog
           showDialog={showDialog}
           selectedPlayer={selectedPlayer}
           selectedAction={selectedAction}
           onOpenChange={setShowDialog}
           onDoneClick={handleDoneClick}
+        />
+
+        <GameStateManager
+          players={players}
+          onGameStateChange={handleGameStateChange}
         />
       </div>
     </div>
