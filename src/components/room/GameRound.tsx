@@ -60,22 +60,25 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      supabase
-        .from('game_state')
-        .upsert({
-          room_id: randomPlayer.room_id,
-          current_player_id: randomPlayer.id,
-          current_action_id: randomAction.id,
-          dialog_open: true, // Set dialog_open to true immediately when selecting a player
-          ready_count: 0
-        })
-        .then(({ error }) => {
-          if (error) {
-            console.error('Error updating game state:', error);
-          }
-          isDrawingRef.current = false;
-          setIsSpinning(false);
-        });
+      // Add a slight delay before updating the game state to allow for animation
+      setTimeout(() => {
+        supabase
+          .from('game_state')
+          .upsert({
+            room_id: randomPlayer.room_id,
+            current_player_id: randomPlayer.id,
+            current_action_id: randomAction.id,
+            dialog_open: true,
+            ready_count: 0
+          })
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error updating game state:', error);
+            }
+            isDrawingRef.current = false;
+            setIsSpinning(false);
+          });
+      }, 1000); // 1 second delay for animation
     }
   }, [players, actions, isSpinning, usedActionIds, navigate, selectedPlayer]);
 

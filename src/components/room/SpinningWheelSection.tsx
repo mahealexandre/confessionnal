@@ -12,6 +12,7 @@ interface SpinningWheelSectionProps {
 
 export const SpinningWheelSection = ({
   players,
+  isSpinning,
   selectedPlayer,
   onSpinComplete,
 }: SpinningWheelSectionProps) => {
@@ -43,11 +44,12 @@ export const SpinningWheelSection = ({
         <Button
           onClick={handleChooseClick}
           className="bg-[#F97316] hover:bg-[#EA580C] transition-colors"
+          disabled={isSpinning}
         >
           Choisir
         </Button>
         {selectedPlayer && (
-          <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow">
+          <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow animate-fade-in">
             {selectedPlayer.username}
           </div>
         )}
