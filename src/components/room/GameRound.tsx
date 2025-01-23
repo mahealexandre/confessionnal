@@ -66,7 +66,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           room_id: randomPlayer.room_id,
           current_player_id: randomPlayer.id,
           current_action_id: randomAction.id,
-          dialog_open: false,
+          dialog_open: true, // Set dialog_open to true immediately when selecting a player
           ready_count: 0
         })
         .then(({ error }) => {
@@ -130,10 +130,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           if (player && action) {
             setSelectedPlayer(player);
             setSelectedAction(action.action_text);
-            if (newState.dialog_open) {
-              setShowDialog(true);
-              setIsSpinning(false);
-            }
+            setShowDialog(newState.dialog_open);
+            setIsSpinning(false);
           }
         }
       )
@@ -183,17 +181,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           showDialog={showDialog}
           onSpinComplete={() => {
             setIsSpinning(false);
-            if (selectedPlayer) {
-              supabase
-                .from('game_state')
-                .update({
-                  dialog_open: true
-                })
-                .eq('room_id', selectedPlayer.room_id)
-                .then(({ error }) => {
-                  if (error) console.error('Error updating dialog state:', error);
-                });
-            }
           }}
         />
 
