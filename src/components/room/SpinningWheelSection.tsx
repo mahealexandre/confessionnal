@@ -49,7 +49,7 @@ export const SpinningWheelSection = ({
           Choisir
         </Button>
         {selectedPlayer && (
-          <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow animate-fade-in">
+          <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow animate-fade-in text-white">
             {selectedPlayer.username}
           </div>
         )}
