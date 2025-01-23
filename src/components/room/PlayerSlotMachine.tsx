@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Player } from "@/types/game";
 
 interface PlayerSlotMachineProps {
@@ -15,30 +15,58 @@ export const PlayerSlotMachine = ({
   onSpinComplete,
 }: PlayerSlotMachineProps) => {
   const [displayedName, setDisplayedName] = useState<string>("");
+  const [intervalDelay, setIntervalDelay] = useState<number>(50);
   
+  const getRandomPlayer = useCallback(() => {
+    return players[Math.floor(Math.random() * players.length)].username;
+  }, [players]);
+
   useEffect(() => {
     if (isSpinning) {
-      const interval = setInterval(() => {
-        const randomPlayer = players[Math.floor(Math.random() * players.length)];
-        setDisplayedName(randomPlayer.username);
-      }, 100); // Change names rapidly
+      let currentDelay = 50; // Start fast
+      const maxDelay = 300; // End slow
+      const incrementDelay = 10; // How much to slow down each iteration
+      let timeoutId: NodeJS.Timeout;
 
-      // Stop after 1.5 seconds
-      setTimeout(() => {
-        clearInterval(interval);
-        if (finalPlayer) {
-          setDisplayedName(finalPlayer.username);
-          onSpinComplete();
+      const spin = () => {
+        setDisplayedName(getRandomPlayer());
+        currentDelay = Math.min(currentDelay + incrementDelay, maxDelay);
+        setIntervalDelay(currentDelay);
+
+        if (currentDelay < maxDelay) {
+          timeoutId = setTimeout(spin, currentDelay);
+        } else {
+          // Animation complete, trigger final reveal after a brief pause
+          setTimeout(() => {
+            if (finalPlayer) {
+              setDisplayedName(finalPlayer.username);
+              onSpinComplete();
+            }
+          }, 200);
         }
-      }, 1500);
+      };
 
-      return () => clearInterval(interval);
+      // Start the spinning animation
+      timeoutId = setTimeout(spin, currentDelay);
+
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
+    } else if (!isSpinning && !finalPlayer) {
+      setDisplayedName("");
+      setIntervalDelay(50);
     }
-  }, [isSpinning, players, finalPlayer, onSpinComplete]);
+  }, [isSpinning, finalPlayer, getRandomPlayer, onSpinComplete]);
 
   return (
-    <div className="text-2xl font-bold text-center mt-8 p-4 bg-white/50 rounded-lg shadow">
-      <div className={`transition-all duration-100 ${isSpinning ? 'animate-bounce' : ''}`}>
+    <div className="text-4xl font-bold text-center mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-lg shadow-xl transition-all duration-300">
+      <div 
+        className={`transition-all duration-${intervalDelay} transform ${
+          isSpinning ? 'scale-110' : ''
+        }`}
+      >
         {displayedName || "..."}
       </div>
     </div>
