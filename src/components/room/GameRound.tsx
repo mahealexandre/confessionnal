@@ -60,7 +60,11 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      // Add a slight delay before updating the game state to allow for animation
+      // First, show the selected player
+      setSelectedPlayer(randomPlayer);
+      setIsSpinning(false);
+
+      // Then, after 2 seconds, update the game state to open the dialog
       setTimeout(() => {
         supabase
           .from('game_state')
@@ -76,9 +80,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
               console.error('Error updating game state:', error);
             }
             isDrawingRef.current = false;
-            setIsSpinning(false);
           });
-      }, 1000); // 1 second delay for animation
+      }, 2000); // 2 seconds delay before opening dialog
     }
   }, [players, actions, isSpinning, usedActionIds, navigate, selectedPlayer]);
 
@@ -131,10 +134,8 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           const action = actions.find(a => a.id === newState.current_action_id);
           
           if (player && action) {
-            setSelectedPlayer(player);
             setSelectedAction(action.action_text);
             setShowDialog(newState.dialog_open);
-            setIsSpinning(false);
           }
         }
       )
