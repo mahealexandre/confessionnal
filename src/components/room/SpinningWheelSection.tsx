@@ -19,14 +19,18 @@ export const SpinningWheelSection = ({
     const roomId = players[0]?.room_id;
     if (!roomId) return;
 
-    const { data: gameState } = await supabase
+    // Get all game states for this room
+    const { data: gameStates } = await supabase
       .from("game_state")
       .select("ready_count")
-      .eq("room_id", roomId)
-      .single();
+      .eq("room_id", roomId);
 
-    const newReadyCount = (gameState?.ready_count || 0) + 1;
+    // Calculate the new ready count as the maximum ready_count + 1
+    const currentMaxReadyCount = gameStates?.reduce((max, state) => 
+      Math.max(max, state.ready_count || 0), 0) || 0;
+    const newReadyCount = currentMaxReadyCount + 1;
 
+    // Update all game state records for this room
     await supabase
       .from("game_state")
       .update({ ready_count: newReadyCount })
