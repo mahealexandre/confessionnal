@@ -38,7 +38,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   };
 
   useEffect(() => {
-    if (!isDrawingRef.current && isSpinning) {
+    if (!isDrawingRef.current && isSpinning && !selectedPlayer) {
       isDrawingRef.current = true;
 
       const availableActions = actions.filter(action => !usedActionIds.includes(action.id));
@@ -74,9 +74,10 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             console.error('Error updating game state:', error);
           }
           isDrawingRef.current = false;
+          setIsSpinning(false);
         });
     }
-  }, [players, actions, isSpinning, usedActionIds, navigate]);
+  }, [players, actions, isSpinning, usedActionIds, navigate, selectedPlayer]);
 
   useEffect(() => {
     const initializeGameState = async () => {
@@ -119,7 +120,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           console.log('Game state changed:', payload);
           const newState = payload.new as any;
           
-          if (newState.ready_count > 0) {
+          if (newState.ready_count > 0 && !selectedPlayer) {
             setIsSpinning(true);
           }
           
@@ -131,7 +132,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             setSelectedAction(action.action_text);
             if (newState.dialog_open) {
               setShowDialog(true);
-              setIsSpinning(false); // Set isSpinning to false when dialog opens
+              setIsSpinning(false);
             }
           }
         }
@@ -141,7 +142,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [players, actions]);
+  }, [players, actions, selectedPlayer]);
 
   const handleDoneClick = async () => {
     if (selectedPlayer && selectedAction) {
@@ -166,6 +167,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
       }
 
       setShowDialog(false);
+      setSelectedPlayer(null);
       setIsSpinning(false);
       onNextRound();
     }
@@ -180,7 +182,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
           selectedPlayer={selectedPlayer}
           showDialog={showDialog}
           onSpinComplete={() => {
-            setIsSpinning(false); // Set isSpinning to false when wheel stops
+            setIsSpinning(false);
             if (selectedPlayer) {
               supabase
                 .from('game_state')
