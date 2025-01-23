@@ -61,9 +61,9 @@ export const PlayerSlotMachine = ({
   }, [isSpinning, finalPlayer, getRandomPlayer, onSpinComplete]);
 
   return (
-    <div className="text-4xl font-bold text-center mt-8 p-6 bg-white/50 backdrop-blur-sm rounded-lg shadow-xl transition-all duration-300">
+    <div className="text-4xl font-bold text-center mt-8">
       <div 
-        className={`transition-all duration-${intervalDelay} transform ${
+        className={`transition-all duration-${intervalDelay} transform text-white ${
           isSpinning ? 'scale-110' : ''
         }`}
       >
