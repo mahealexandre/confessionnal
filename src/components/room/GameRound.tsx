@@ -17,13 +17,13 @@ interface GameRoundProps {
 
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
   const navigate = useNavigate();
-  const [isSpinning, setIsSpinning] = useState(false);
+  const [isSpinning, setIsSpinning] = useState<boolean>(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [selectedAction, setSelectedAction] = useState<string>("");
-  const [showDialog, setShowDialog] = useState(false);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
-  const isDrawingRef = useRef(false);
-  const hasInitializedRef = useRef(false);
+  const isDrawingRef = useRef<boolean>(false);
+  const hasInitializedRef = useRef<boolean>(false);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
