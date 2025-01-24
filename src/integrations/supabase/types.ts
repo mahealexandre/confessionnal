@@ -71,7 +71,6 @@ export type Database = {
           id: string
           player_id: string | null
           room_id: string
-          used: boolean | null
         }
         Insert: {
           action_text: string
@@ -79,7 +78,6 @@ export type Database = {
           id?: string
           player_id?: string | null
           room_id: string
-          used?: boolean | null
         }
         Update: {
           action_text?: string
@@ -87,7 +85,6 @@ export type Database = {
           id?: string
           player_id?: string | null
           room_id?: string
-          used?: boolean | null
         }
         Relationships: [
           {
