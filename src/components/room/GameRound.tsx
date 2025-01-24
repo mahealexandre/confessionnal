@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Player } from "@/types/game";
+import { GameAction, GameState } from "@/types/game-state";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { SpinningWheelSection } from "./SpinningWheelSection";
@@ -8,24 +9,10 @@ import { ActionDialog } from "./ActionDialog";
 import { PlayerSlotMachine } from "./PlayerSlotMachine";
 import { GameStateManager } from "./GameStateManager";
 
-interface GameAction {
-  id: string;
-  action_text: string;
-  player_id: string;
-}
-
 interface GameRoundProps {
   players: Player[];
   actions: GameAction[];
   onNextRound: () => void;
-}
-
-interface GameState {
-  room_id: string;
-  current_player_id: string | null;
-  current_action_id: string | null;
-  dialog_open: boolean;
-  ready_count: number;
 }
 
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
