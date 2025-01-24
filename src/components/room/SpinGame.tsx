@@ -30,6 +30,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
         (payload: any) => {
           if (payload.new.animation_state === "spinning") {
             setIsSpinning(true);
+            setSelectedAction(null);
             startSpinAnimation();
           }
         }
