@@ -17,9 +17,10 @@ type ActionFormValues = z.infer<typeof actionSchema>;
 interface ActionFormProps {
   submittedCount: number;
   totalPlayers: number;
+  onAllSubmitted?: () => void;
 }
 
-export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) => {
+export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: ActionFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -145,6 +146,10 @@ export const ActionForm = ({ submittedCount, totalPlayers }: ActionFormProps) =>
         .eq("id", roomData.id);
 
       if (updateError) throw updateError;
+
+      if (onAllSubmitted) {
+        onAllSubmitted();
+      }
 
       toast({
         title: "La partie commence !",
