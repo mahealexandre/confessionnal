@@ -24,9 +24,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [showDialog, setShowDialog] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
+  // Listen for animation state changes
   useEffect(() => {
     const channel = supabase
-      .channel("game_state")
+      .channel("animation_state")
       .on(
         "postgres_changes",
         {
@@ -35,26 +36,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           table: "game_state",
           filter: `room_id=eq.${roomId}`,
         },
-        async (payload: any) => {
+        (payload: any) => {
           if (payload.new.animation_state === "spinning") {
             setIsSpinning(true);
             startSpinAnimation();
-          }
-          
-          // Listen for changes in current_action_id
-          if (payload.new.current_action_id) {
-            const { data: action } = await supabase
-              .from("player_actions")
-              .select("action_text")
-              .eq("id", payload.new.current_action_id)
-              .single();
-            
-            if (action) {
-              setSelectedAction(action.action_text);
-              setTimeout(() => {
-                setShowDialog(true);
-              }, 1000);
-            }
           }
         }
       )
@@ -65,6 +50,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
   }, [roomId]);
 
+  // Listen for player selection
   useEffect(() => {
     const channel = supabase
       .channel("selected_player")
@@ -82,7 +68,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             if (selectedPlayer) {
               setSelectedPlayer(selectedPlayer);
               
-              // After 1 second, fetch a random action and update game state
+              // After animation ends, select a random action
               setTimeout(async () => {
                 const { data: actions } = await supabase
                   .from("player_actions")
@@ -106,7 +92,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     .update({ current_action_id: selectedAction.id })
                     .eq("room_id", roomId);
                 }
-              }, 1000);
+              }, 5000); // Wait for animation to complete
             }
           }
         }
@@ -117,6 +103,40 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       channel.unsubscribe();
     };
   }, [roomId, players]);
+
+  // Listen for action selection
+  useEffect(() => {
+    const channel = supabase
+      .channel("action_selection")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "game_state",
+          filter: `room_id=eq.${roomId}`,
+        },
+        async (payload: any) => {
+          if (payload.new.current_action_id) {
+            const { data: action } = await supabase
+              .from("player_actions")
+              .select("action_text")
+              .eq("id", payload.new.current_action_id)
+              .single();
+            
+            if (action) {
+              setSelectedAction(action.action_text);
+              setShowDialog(true);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roomId]);
 
   const startSpinAnimation = async () => {
     setCountdown(5);
