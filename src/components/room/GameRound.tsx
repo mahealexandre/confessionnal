@@ -20,6 +20,14 @@ interface GameRoundProps {
   onNextRound: () => void;
 }
 
+interface GameState {
+  room_id: string;
+  current_player_id: string | null;
+  current_action_id: string | null;
+  dialog_open: boolean;
+  ready_count: number;
+}
+
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
   const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState(false);
@@ -119,7 +127,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     initializeGameState();
   }, [players]);
 
-  const handleGameStateChange = (newState: any) => {
+  const handleGameStateChange = (newState: GameState) => {
     if (newState.ready_count > 0 && !selectedPlayer) {
       setIsSpinning(true);
     }
