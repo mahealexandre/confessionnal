@@ -13,6 +13,7 @@ interface SpinGameProps {
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,45 +41,67 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
   }, [roomId]);
 
-  const startSpinAnimation = async () => {
-    const duration = 5000; // 5 seconds
-    const intervals = 50; // Slower intervals for smoother animation
-    let elapsed = 0;
-    let speed = 50; // Initial speed (faster)
-
-    const timer = setInterval(async () => {
-      const randomIndex = Math.floor(Math.random() * players.length);
-      setSelectedPlayer(players[randomIndex]);
-      elapsed += intervals;
-
-      // Gradually slow down the animation
-      if (elapsed > duration / 2) {
-        speed = Math.min(300, speed * 1.2); // Increase interval time (slow down)
-      }
-
-      if (elapsed >= duration) {
-        clearInterval(timer);
-        setIsSpinning(false);
-
-        // Select final player randomly
-        const finalIndex = Math.floor(Math.random() * players.length);
-        const finalPlayer = players[finalIndex];
-        setSelectedPlayer(finalPlayer);
-
-        // Update player selection in database
-        const { error: updateError } = await supabase
-          .from("players")
-          .update({ is_selected: true })
-          .eq("id", finalPlayer.id);
-
-        if (!updateError) {
-          toast({
-            title: "Joueur sélectionné !",
-            description: `${finalPlayer.username} a été choisi !`,
-          });
+  // Subscribe to player selection updates
+  useEffect(() => {
+    const channel = supabase
+      .channel("selected_player")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload: any) => {
+          if (payload.new.is_selected) {
+            const selectedPlayer = players.find(p => p.id === payload.new.id);
+            if (selectedPlayer) {
+              setSelectedPlayer(selectedPlayer);
+            }
+          }
         }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roomId, players]);
+
+  const startSpinAnimation = async () => {
+    setCountdown(5);
+    
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev === null || prev <= 0) {
+          clearInterval(countdownInterval);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // After 5 seconds, select the final player
+    setTimeout(async () => {
+      const finalIndex = Math.floor(Math.random() * players.length);
+      const finalPlayer = players[finalIndex];
+
+      // Update player selection in database
+      const { error: updateError } = await supabase
+        .from("players")
+        .update({ is_selected: true })
+        .eq("id", finalPlayer.id);
+
+      if (!updateError) {
+        setSelectedPlayer(finalPlayer);
+        setIsSpinning(false);
+        toast({
+          title: "Joueur sélectionné !",
+          description: `${finalPlayer.username} a été choisi !`,
+        });
       }
-    }, speed);
+    }, 5000);
   };
 
   const handleSpin = async () => {
@@ -101,23 +124,30 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
             <div className="relative h-32 border-4 border-[#F97316] rounded-xl overflow-hidden bg-white">
               <AnimatePresence mode="wait">
-                {selectedPlayer && (
+                {countdown !== null ? (
+                  <motion.div
+                    key="countdown"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                  >
+                    <span className="text-4xl font-bold text-[#F97316]">
+                      {countdown}
+                    </span>
+                  </motion.div>
+                ) : selectedPlayer ? (
                   <motion.div
                     key={selectedPlayer.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{
-                      type: "tween",
-                      duration: 0.2,
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     className="absolute inset-0 flex items-center justify-center"
                   >
                     <span className="text-2xl font-bold text-[#F97316]">
                       {selectedPlayer.username}
                     </span>
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
 
