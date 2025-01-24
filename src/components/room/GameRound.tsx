@@ -26,6 +26,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
   const [usedActionIds, setUsedActionIds] = useState<string[]>([]);
   const isDrawingRef = useRef<boolean>(false);
   const hasInitializedRef = useRef<boolean>(false);
+  const animationCompleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const cleanupGame = async () => {
     if (players.length > 0) {
@@ -69,7 +70,13 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setSelectedPlayer(selectedPlayer);
 
-      setTimeout(() => {
+      // Clear any existing timeout
+      if (animationCompleteTimeoutRef.current) {
+        clearTimeout(animationCompleteTimeoutRef.current);
+      }
+
+      // Set a new timeout to show dialog 2 seconds after animation completes
+      animationCompleteTimeoutRef.current = setTimeout(() => {
         supabase
           .from('game_state')
           .upsert({
@@ -85,7 +92,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             }
             isDrawingRef.current = false;
           });
-      }, 2000);
+      }, 4000); // 2 seconds for animation + 2 seconds delay
     }
   }, [players, actions, isSpinning, usedActionIds, navigate, selectedPlayer]);
 
