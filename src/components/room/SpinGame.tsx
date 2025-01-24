@@ -3,14 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 interface SpinGameProps {
   players: Player[];
@@ -21,7 +13,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [showDialog, setShowDialog] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   // Listen for animation state changes
@@ -126,7 +117,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             
             if (action) {
               setSelectedAction(action.action_text);
-              setShowDialog(true);
             }
           }
         }
@@ -168,15 +158,13 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const handleSpin = async () => {
     if (isSpinning) return;
 
+    // Reset selected action when spinning again
+    setSelectedAction(null);
+
     await supabase
       .from("game_state")
       .update({ animation_state: "spinning" })
       .eq("room_id", roomId);
-  };
-
-  const handleCloseDialog = () => {
-    setShowDialog(false);
-    setSelectedAction(null);
   };
 
   return (
@@ -207,11 +195,16 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     key={selectedPlayer.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="absolute inset-0 flex items-center justify-center"
+                    className="absolute inset-0 flex flex-col items-center justify-center space-y-2"
                   >
                     <span className="text-2xl font-bold text-[#F97316]">
                       {selectedPlayer.username}
                     </span>
+                    {selectedAction && (
+                      <span className="text-lg text-gray-600 italic">
+                        {selectedAction}
+                      </span>
+                    )}
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -227,22 +220,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           </div>
         </div>
       </div>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Action pour {selectedPlayer?.username}</DialogTitle>
-            <DialogDescription className="text-lg mt-4">
-              {selectedAction}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={handleCloseDialog} className="bg-[#F97316] hover:bg-[#F97316]/90 text-white">
-              Fait !
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
