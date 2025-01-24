@@ -42,6 +42,23 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             setIsSpinning(true);
             startSpinAnimation();
           }
+          
+          // Listen for current_action_id changes
+          if (payload.new.current_action_id) {
+            const { data: action } = await supabase
+              .from("player_actions")
+              .select("action_text")
+              .eq("id", payload.new.current_action_id)
+              .single();
+            
+            if (action) {
+              setSelectedAction(action.action_text);
+              // Show dialog after 3 seconds
+              setTimeout(() => {
+                setShowDialog(true);
+              }, 3000);
+            }
+          }
         }
       )
       .subscribe();
@@ -62,12 +79,13 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           table: "players",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload: any) => {
+        async (payload: any) => {
           if (payload.new.is_selected) {
             const selectedPlayer = players.find(p => p.id === payload.new.id);
             if (selectedPlayer) {
               setSelectedPlayer(selectedPlayer);
-              // After 1 second, fetch a random action and show the dialog
+              
+              // After player is selected, fetch a random action and update game state
               setTimeout(async () => {
                 const { data: actions } = await supabase
                   .from("player_actions")
@@ -85,8 +103,11 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     .update({ used: true })
                     .eq("id", selectedAction.id);
 
-                  setSelectedAction(selectedAction.action_text);
-                  setShowDialog(true);
+                  // Update game state with selected action
+                  await supabase
+                    .from("game_state")
+                    .update({ current_action_id: selectedAction.id })
+                    .eq("room_id", roomId);
                 }
               }, 1000);
             }
@@ -125,10 +146,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       if (!updateError) {
         setSelectedPlayer(finalPlayer);
         setIsSpinning(false);
-        toast({
-          title: "Joueur sélectionné !",
-          description: `${finalPlayer.username} a été choisi !`,
-        });
       }
     }, 5000);
   };
