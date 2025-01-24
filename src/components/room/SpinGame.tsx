@@ -41,15 +41,20 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId]);
 
   const startSpinAnimation = async () => {
-    // Simulate spinning animation
     const duration = 5000; // 5 seconds
-    const intervals = 20;
+    const intervals = 50; // Slower intervals for smoother animation
     let elapsed = 0;
+    let speed = 50; // Initial speed (faster)
 
     const timer = setInterval(async () => {
       const randomIndex = Math.floor(Math.random() * players.length);
       setSelectedPlayer(players[randomIndex]);
       elapsed += intervals;
+
+      // Gradually slow down the animation
+      if (elapsed > duration / 2) {
+        speed = Math.min(300, speed * 1.2); // Increase interval time (slow down)
+      }
 
       if (elapsed >= duration) {
         clearInterval(timer);
@@ -61,17 +66,19 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
         setSelectedPlayer(finalPlayer);
 
         // Update player selection in database
-        await supabase
+        const { error: updateError } = await supabase
           .from("players")
           .update({ is_selected: true })
           .eq("id", finalPlayer.id);
 
-        toast({
-          title: "Joueur sélectionné !",
-          description: `${finalPlayer.username} a été choisi !`,
-        });
+        if (!updateError) {
+          toast({
+            title: "Joueur sélectionné !",
+            description: `${finalPlayer.username} a été choisi !`,
+          });
+        }
       }
-    }, intervals);
+    }, speed);
   };
 
   const handleSpin = async () => {
@@ -93,17 +100,16 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             </h1>
 
             <div className="relative h-32 border-4 border-[#F97316] rounded-xl overflow-hidden bg-white">
-              <AnimatePresence>
+              <AnimatePresence mode="wait">
                 {selectedPlayer && (
                   <motion.div
                     key={selectedPlayer.id}
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    exit={{ y: -100 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
                     transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
+                      type: "tween",
+                      duration: 0.2,
                     }}
                     className="absolute inset-0 flex items-center justify-center"
                   >
