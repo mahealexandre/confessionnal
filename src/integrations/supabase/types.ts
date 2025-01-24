@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       game_state: {
         Row: {
+          animation_state: string | null
           created_at: string
           current_action_id: string | null
           current_player_id: string | null
@@ -20,6 +21,7 @@ export type Database = {
           room_id: string
         }
         Insert: {
+          animation_state?: string | null
           created_at?: string
           current_action_id?: string | null
           current_player_id?: string | null
@@ -29,6 +31,7 @@ export type Database = {
           room_id: string
         }
         Update: {
+          animation_state?: string | null
           created_at?: string
           current_action_id?: string | null
           current_player_id?: string | null
@@ -106,6 +109,7 @@ export type Database = {
           has_submitted: boolean | null
           id: string
           is_host: boolean | null
+          is_selected: boolean | null
           ready_for_next_round: boolean | null
           room_id: string | null
           username: string
@@ -115,6 +119,7 @@ export type Database = {
           has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
+          is_selected?: boolean | null
           ready_for_next_round?: boolean | null
           room_id?: string | null
           username: string
@@ -124,6 +129,7 @@ export type Database = {
           has_submitted?: boolean | null
           id?: string
           is_host?: boolean | null
+          is_selected?: boolean | null
           ready_for_next_round?: boolean | null
           room_id?: string | null
           username?: string

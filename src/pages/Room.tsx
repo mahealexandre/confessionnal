@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { WaitingRoom } from "@/components/room/WaitingRoom";
 import { ActionForm } from "@/components/room/ActionForm";
+import { SpinGame } from "@/components/room/SpinGame";
 import { Player } from "@/types/game";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +13,7 @@ const Room = () => {
   const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
+  const [roomId, setRoomId] = useState<string>("");
 
   useEffect(() => {
     if (!code) {
@@ -35,6 +37,8 @@ const Room = () => {
         navigate("/");
         return;
       }
+
+      setRoomId(room.id);
 
       const { data: playersData } = await supabase
         .from("players")
@@ -116,12 +120,39 @@ const Room = () => {
         .from("rooms")
         .update({ status: "submitting" })
         .eq("id", room.id);
+
+      // Create initial game state
+      await supabase
+        .from("game_state")
+        .insert([
+          {
+            room_id: room.id,
+            animation_state: "idle",
+          },
+        ]);
     }
   };
 
+  if (roomStatus === "playing") {
+    return <SpinGame players={players} roomId={roomId} />;
+  }
+
   if (roomStatus === "submitting") {
     const submittedCount = players.filter((p) => p.has_submitted).length;
-    return <ActionForm submittedCount={submittedCount} totalPlayers={players.length} />;
+    return (
+      <ActionForm
+        submittedCount={submittedCount}
+        totalPlayers={players.length}
+        onAllSubmitted={() => {
+          if (roomId) {
+            supabase
+              .from("rooms")
+              .update({ status: "playing" })
+              .eq("id", roomId);
+          }
+        }}
+      />
+    );
   }
 
   return (
