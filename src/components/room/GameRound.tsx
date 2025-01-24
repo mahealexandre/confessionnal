@@ -8,9 +8,15 @@ import { ActionDialog } from "./ActionDialog";
 import { PlayerSlotMachine } from "./PlayerSlotMachine";
 import { GameStateManager } from "./GameStateManager";
 
+interface GameAction {
+  id: string;
+  action_text: string;
+  player_id: string;
+}
+
 interface GameRoundProps {
   players: Player[];
-  actions: { id: string; action_text: string; player_id: string }[];
+  actions: GameAction[];
   onNextRound: () => void;
 }
 
@@ -54,7 +60,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      // Use a deterministic selection based on timestamp to ensure all clients select the same action
       const timestamp = new Date().getTime();
       const randomIndex = Math.floor((timestamp % 1000) / 1000 * availableActions.length);
       const selectedAction = availableActions[randomIndex];
@@ -67,7 +72,6 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
       setSelectedPlayer(selectedPlayer);
 
-      // Then, after 2 seconds, update the game state to open the dialog
       setTimeout(() => {
         supabase
           .from('game_state')
