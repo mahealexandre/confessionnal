@@ -54,25 +54,27 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
         return;
       }
 
-      const randomAction = availableActions[Math.floor(Math.random() * availableActions.length)];
-      const randomPlayer = players.find(p => p.id === randomAction.player_id);
+      // Use a deterministic selection based on timestamp to ensure all clients select the same action
+      const timestamp = new Date().getTime();
+      const randomIndex = Math.floor((timestamp % 1000) / 1000 * availableActions.length);
+      const selectedAction = availableActions[randomIndex];
+      const selectedPlayer = players.find(p => p.id === selectedAction.player_id);
 
-      if (!randomPlayer) {
-        console.error('Player not found for action:', randomAction);
+      if (!selectedPlayer) {
+        console.error('Player not found for action:', selectedAction);
         return;
       }
 
-      // First, show the selected player
-      setSelectedPlayer(randomPlayer);
+      setSelectedPlayer(selectedPlayer);
 
       // Then, after 2 seconds, update the game state to open the dialog
       setTimeout(() => {
         supabase
           .from('game_state')
           .upsert({
-            room_id: randomPlayer.room_id,
-            current_player_id: randomPlayer.id,
-            current_action_id: randomAction.id,
+            room_id: selectedPlayer.room_id,
+            current_player_id: selectedPlayer.id,
+            current_action_id: selectedAction.id,
             dialog_open: true,
             ready_count: 0
           })
@@ -82,7 +84,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
             }
             isDrawingRef.current = false;
           });
-      }, 2000); // 2 seconds delay before opening dialog
+      }, 2000);
     }
   }, [players, actions, isSpinning, usedActionIds, navigate, selectedPlayer]);
 
@@ -158,7 +160,7 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+      <div className="max-w-2xl mx-auto space-y-8">
         <SpinningWheelSection
           players={players}
           isSpinning={isSpinning}

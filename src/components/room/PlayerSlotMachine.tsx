@@ -46,7 +46,6 @@ export const PlayerSlotMachine = ({
         }
       };
 
-      // Start the spinning animation
       timeoutId = setTimeout(spin, currentDelay);
 
       return () => {
@@ -61,13 +60,20 @@ export const PlayerSlotMachine = ({
   }, [isSpinning, finalPlayer, getRandomPlayer, onSpinComplete]);
 
   return (
-    <div className="text-4xl font-bold text-center mt-8">
-      <div 
-        className={`transition-all duration-${intervalDelay} transform text-white ${
-          isSpinning ? 'scale-110' : ''
-        }`}
-      >
-        {displayedName || "..."}
+    <div className="relative w-full max-w-xl mx-auto px-4 py-8">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#9b87f5]/20 to-[#FEC6A1]/20 rounded-xl blur-xl" />
+      <div className="relative">
+        <div 
+          className={`text-5xl md:text-6xl font-bold text-center transition-all duration-${intervalDelay} transform
+            ${isSpinning ? 'scale-110 text-[#8B5CF6]' : 'text-[#7E69AB]'}
+            ${!displayedName ? 'opacity-50' : 'opacity-100'}
+          `}
+        >
+          {displayedName || "..."}
+        </div>
+        {isSpinning && (
+          <div className="absolute -inset-1 bg-gradient-to-r from-[#9b87f5] to-[#FEC6A1] rounded-lg opacity-30 animate-pulse" />
+        )}
       </div>
     </div>
   );
