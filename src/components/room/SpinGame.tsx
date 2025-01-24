@@ -73,7 +73,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                   .from("player_actions")
                   .select("*")
                   .eq("room_id", roomId)
-                  .is("used", false);
+                  .eq("used", false);
 
                 if (actions && actions.length > 0) {
                   const randomIndex = Math.floor(Math.random() * actions.length);
