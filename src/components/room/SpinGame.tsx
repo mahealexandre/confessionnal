@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -24,7 +23,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     const channel = supabase
@@ -41,6 +39,23 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           if (payload.new.animation_state === "spinning") {
             setIsSpinning(true);
             startSpinAnimation();
+          }
+          
+          // Listen for selected action updates
+          if (payload.new.current_action_id) {
+            const { data: action } = await supabase
+              .from("player_actions")
+              .select("action_text")
+              .eq("id", payload.new.current_action_id)
+              .single();
+            
+            if (action) {
+              setSelectedAction(action.action_text);
+              // Show dialog after 3 seconds
+              setTimeout(() => {
+                setShowDialog(true);
+              }, 3000);
+            }
           }
         }
       )
@@ -62,33 +77,35 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           table: "players",
           filter: `room_id=eq.${roomId}`,
         },
-        (payload: any) => {
+        async (payload: any) => {
           if (payload.new.is_selected) {
             const selectedPlayer = players.find(p => p.id === payload.new.id);
             if (selectedPlayer) {
               setSelectedPlayer(selectedPlayer);
-              // After 1 second, fetch a random action and show the dialog
-              setTimeout(async () => {
-                const { data: actions } = await supabase
+              
+              // After selection, fetch a random unused action and update game state
+              const { data: actions } = await supabase
+                .from("player_actions")
+                .select("*")
+                .eq("room_id", roomId)
+                .eq("used", false);
+
+              if (actions && actions.length > 0) {
+                const randomIndex = Math.floor(Math.random() * actions.length);
+                const selectedAction = actions[randomIndex];
+                
+                // Update game state with selected action
+                await supabase
+                  .from("game_state")
+                  .update({ current_action_id: selectedAction.id })
+                  .eq("room_id", roomId);
+
+                // Mark the action as used
+                await supabase
                   .from("player_actions")
-                  .select("*")
-                  .eq("room_id", roomId)
-                  .eq("used", false);
-
-                if (actions && actions.length > 0) {
-                  const randomIndex = Math.floor(Math.random() * actions.length);
-                  const selectedAction = actions[randomIndex];
-                  
-                  // Mark the action as used
-                  await supabase
-                    .from("player_actions")
-                    .update({ used: true })
-                    .eq("id", selectedAction.id);
-
-                  setSelectedAction(selectedAction.action_text);
-                  setShowDialog(true);
-                }
-              }, 1000);
+                  .update({ used: true })
+                  .eq("id", selectedAction.id);
+              }
             }
           }
         }
@@ -117,19 +134,13 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       const finalIndex = Math.floor(Math.random() * players.length);
       const finalPlayer = players[finalIndex];
 
-      const { error: updateError } = await supabase
+      await supabase
         .from("players")
         .update({ is_selected: true })
         .eq("id", finalPlayer.id);
 
-      if (!updateError) {
-        setSelectedPlayer(finalPlayer);
-        setIsSpinning(false);
-        toast({
-          title: "Joueur sélectionné !",
-          description: `${finalPlayer.username} a été choisi !`,
-        });
-      }
+      setSelectedPlayer(finalPlayer);
+      setIsSpinning(false);
     }, 5000);
   };
 
