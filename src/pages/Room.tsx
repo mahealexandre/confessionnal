@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { WaitingRoom } from "@/components/room/WaitingRoom";
-import { SpinGame } from "@/components/room/SpinGame";
+import { ActionForm } from "@/components/room/ActionForm";
 import { Player } from "@/types/game";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,7 +12,6 @@ const Room = () => {
   const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
   const [roomStatus, setRoomStatus] = useState<string>("waiting");
-  const [roomId, setRoomId] = useState<string>("");
 
   useEffect(() => {
     if (!code) {
@@ -37,8 +36,6 @@ const Room = () => {
         return;
       }
 
-      setRoomId(room.id);
-
       const { data: playersData } = await supabase
         .from("players")
         .select()
@@ -49,22 +46,6 @@ const Room = () => {
       }
 
       setRoomStatus(room.status);
-
-      // Create game state if it doesn't exist
-      const { data: gameState } = await supabase
-        .from("game_state")
-        .select()
-        .eq("room_id", room.id)
-        .single();
-
-      if (!gameState) {
-        await supabase.from("game_state").insert([
-          {
-            room_id: room.id,
-            animation_state: "idle",
-          },
-        ]);
-      }
     };
 
     fetchPlayers();
@@ -78,14 +59,22 @@ const Room = () => {
           schema: "public",
           table: "players",
         },
-        async () => {
-          const { data: updatedPlayers } = await supabase
-            .from("players")
+        async (payload) => {
+          const { data: room } = await supabase
+            .from("rooms")
             .select()
-            .eq("room_id", roomId);
+            .eq("code", code)
+            .single();
 
-          if (updatedPlayers) {
-            setPlayers(updatedPlayers);
+          if (room) {
+            const { data: updatedPlayers } = await supabase
+              .from("players")
+              .select()
+              .eq("room_id", room.id);
+
+            if (updatedPlayers) {
+              setPlayers(updatedPlayers);
+            }
           }
         }
       )
@@ -111,7 +100,7 @@ const Room = () => {
       playersSubscription.unsubscribe();
       roomSubscription.unsubscribe();
     };
-  }, [code, navigate, toast, roomId]);
+  }, [code, navigate, toast]);
 
   const handleStartGame = async () => {
     if (!code) return;
@@ -125,13 +114,14 @@ const Room = () => {
     if (room) {
       await supabase
         .from("rooms")
-        .update({ status: "playing" })
+        .update({ status: "submitting" })
         .eq("id", room.id);
     }
   };
 
-  if (roomStatus === "playing") {
-    return <SpinGame players={players} roomId={roomId} />;
+  if (roomStatus === "submitting") {
+    const submittedCount = players.filter((p) => p.has_submitted).length;
+    return <ActionForm submittedCount={submittedCount} totalPlayers={players.length} />;
   }
 
   return (
