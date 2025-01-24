@@ -1,240 +1,132 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { WaitingRoom } from "@/components/room/WaitingRoom";
 import { ActionForm } from "@/components/room/ActionForm";
-import { GameRound } from "@/components/room/GameRound";
 import { Player } from "@/types/game";
+import { useToast } from "@/hooks/use-toast";
 
 const Room = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [players, setPlayers] = useState<Player[]>([]);
-  const [roomId, setRoomId] = useState<string | null>(null);
-  const [roomStatus, setRoomStatus] = useState("waiting");
-  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
-  const [submittedCount, setSubmittedCount] = useState(0);
-  const [actions, setActions] = useState<any[]>([]);
-  const [remainingActions, setRemainingActions] = useState<any[]>([]);
+  const [roomStatus, setRoomStatus] = useState<string>("waiting");
 
   useEffect(() => {
-    const fetchRoom = async () => {
-      try {
-        const { data: room, error: roomError } = await supabase
-          .from("rooms")
-          .select()
-          .eq("code", code)
-          .single();
+    if (!code) {
+      navigate("/");
+      return;
+    }
 
-        if (roomError) throw roomError;
-        
-        setRoomId(room.id);
-        setRoomStatus(room.status);
+    const fetchPlayers = async () => {
+      const { data: room, error: roomError } = await supabase
+        .from("rooms")
+        .select()
+        .eq("code", code)
+        .single();
 
-        const storedUsername = localStorage.getItem('username');
-        console.log("Stored username:", storedUsername);
-
-        const { data: playersData, error: playersError } = await supabase
-          .from("players")
-          .select()
-          .eq("room_id", room.id);
-
-        if (playersError) throw playersError;
-
-        setPlayers(playersData);
-        
-        const currentPlayer = playersData.find(p => p.username === storedUsername);
-        
-        if (currentPlayer) {
-          console.log("Found player:", currentPlayer);
-          localStorage.setItem(`player_id_${room.id}`, currentPlayer.id);
-          setCurrentPlayerId(currentPlayer.id);
-        }
-
-        const submittedPlayers = playersData.filter(p => p.has_submitted).length;
-        console.log("Initial submitted count:", submittedPlayers);
-        setSubmittedCount(submittedPlayers);
-
-        if (room.status === "playing") {
-          const { data: actionsData, error: actionsError } = await supabase
-            .from("player_actions")
-            .select()
-            .eq("room_id", room.id);
-
-          if (actionsError) throw actionsError;
-          if (actionsData) {
-            setActions(actionsData);
-            setRemainingActions(actionsData);
-          }
-        }
-
-      } catch (error) {
-        console.error("Error fetching room:", error);
+      if (roomError || !room) {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: "Impossible de rejoindre la salle.",
+          description: "Cette salle n'existe pas.",
         });
         navigate("/");
+        return;
       }
+
+      const { data: playersData } = await supabase
+        .from("players")
+        .select()
+        .eq("room_id", room.id);
+
+      if (playersData) {
+        setPlayers(playersData);
+      }
+
+      setRoomStatus(room.status);
     };
 
-    if (code) {
-      fetchRoom();
-    }
+    fetchPlayers();
 
-    // Subscribe to players changes
-    const playersChannel = supabase
-      .channel('players_changes')
+    const playersSubscription = supabase
+      .channel("players_channel")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'players',
+          event: "*",
+          schema: "public",
+          table: "players",
         },
         async (payload) => {
-          console.log("Players change detected:", payload);
-          
-          if (!roomId) return;
-
-          const { data: playersData } = await supabase
-            .from("players")
+          const { data: room } = await supabase
+            .from("rooms")
             .select()
-            .eq("room_id", roomId);
+            .eq("code", code)
+            .single();
 
-          if (playersData) {
-            setPlayers(playersData);
-            const newSubmittedCount = playersData.filter(p => p.has_submitted).length;
-            console.log(`Updated submitted count: ${newSubmittedCount}/${playersData.length}`);
-            setSubmittedCount(newSubmittedCount);
+          if (room) {
+            const { data: updatedPlayers } = await supabase
+              .from("players")
+              .select()
+              .eq("room_id", room.id);
+
+            if (updatedPlayers) {
+              setPlayers(updatedPlayers);
+            }
           }
         }
       )
       .subscribe();
 
-    // Subscribe to room changes
-    const roomChannel = supabase
-      .channel('room_changes')
+    const roomSubscription = supabase
+      .channel("room_status")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'rooms',
+          event: "UPDATE",
+          schema: "public",
+          table: "rooms",
+          filter: `code=eq.${code}`,
         },
-        (payload) => {
-          console.log("Room status changed:", payload.new.status);
-          if (payload.new.id === roomId) {
-            setRoomStatus(payload.new.status);
-          }
-        }
-      )
-      .subscribe();
-
-    // Subscribe to player actions changes
-    const actionsChannel = supabase
-      .channel('actions_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'player_actions',
-        },
-        async (payload) => {
-          console.log("Actions change detected:", payload);
-          
-          if (!roomId) return;
-
-          const { data: actionsData } = await supabase
-            .from("player_actions")
-            .select()
-            .eq("room_id", roomId);
-
-          if (actionsData) {
-            setActions(actionsData);
-            setRemainingActions(actionsData);
-          }
+        (payload: any) => {
+          setRoomStatus(payload.new.status);
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(playersChannel);
-      supabase.removeChannel(roomChannel);
-      supabase.removeChannel(actionsChannel);
+      playersSubscription.unsubscribe();
+      roomSubscription.unsubscribe();
     };
-  }, [code, navigate, roomId, toast]);
+  }, [code, navigate, toast]);
 
   const handleStartGame = async () => {
-    try {
-      if (!roomId) return;
+    if (!code) return;
 
-      const { error: updateError } = await supabase
+    const { data: room } = await supabase
+      .from("rooms")
+      .select()
+      .eq("code", code)
+      .single();
+
+    if (room) {
+      await supabase
         .from("rooms")
         .update({ status: "submitting" })
-        .eq("id", roomId);
-
-      if (updateError) throw updateError;
-
-      setRoomStatus("submitting");
-    } catch (error) {
-      console.error("Error starting game:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de démarrer la partie.",
-      });
+        .eq("id", room.id);
     }
   };
-
-  const handleNextRound = () => {
-    if (remainingActions.length > 0) {
-      setRemainingActions((current) => current.slice(1));
-    } else {
-      toast({
-        title: "Partie terminée !",
-        description: "Toutes les actions ont été réalisées.",
-      });
-      navigate("/");
-    }
-  };
-
-  const currentPlayer = players.find((p) => p.id === currentPlayerId);
-
-  if (roomStatus === "waiting") {
-    return (
-      <WaitingRoom 
-        code={code || ""} 
-        players={players} 
-        onStartGame={handleStartGame}
-      />
-    );
-  }
 
   if (roomStatus === "submitting") {
-    return (
-      <ActionForm
-        submittedCount={submittedCount}
-        totalPlayers={players.length}
-      />
-    );
+    const submittedCount = players.filter((p) => p.has_submitted).length;
+    return <ActionForm submittedCount={submittedCount} totalPlayers={players.length} />;
   }
 
-  if (roomStatus === "playing") {
-    return (
-      <GameRound
-        players={players}
-        actions={remainingActions}
-        onNextRound={handleNextRound}
-      />
-    );
-  }
-
-  return null;
+  return (
+    <WaitingRoom code={code || ""} players={players} onStartGame={handleStartGame} />
+  );
 };
 
 export default Room;
