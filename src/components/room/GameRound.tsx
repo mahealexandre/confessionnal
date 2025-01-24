@@ -15,6 +15,8 @@ interface GameRoundProps {
   onNextRound: () => void;
 }
 
+type GameStateUpdate = Partial<GameState>;
+
 export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => {
   const navigate = useNavigate();
   const [isSpinning, setIsSpinning] = useState<boolean>(false);
@@ -114,17 +116,19 @@ export const GameRound = ({ players, actions, onNextRound }: GameRoundProps) => 
     initializeGameState();
   }, [players]);
 
-  const handleGameStateChange = (newState: GameState) => {
-    if (newState.ready_count > 0 && !selectedPlayer) {
+  const handleGameStateChange = (newState: GameStateUpdate) => {
+    if (newState.ready_count && newState.ready_count > 0 && !selectedPlayer) {
       setIsSpinning(true);
     }
     
-    const player = players.find(p => p.id === newState.current_player_id);
-    const action = actions.find(a => a.id === newState.current_action_id);
-    
-    if (player && action) {
-      setSelectedAction(action.action_text);
-      setShowDialog(newState.dialog_open);
+    if (newState.current_player_id && newState.current_action_id) {
+      const player = players.find(p => p.id === newState.current_player_id);
+      const action = actions.find(a => a.id === newState.current_action_id);
+      
+      if (player && action) {
+        setSelectedAction(action.action_text);
+        setShowDialog(newState.dialog_open || false);
+      }
     }
   };
 
