@@ -90,7 +90,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#6a1e3a] via-[#d16b92] to-[#f8cdd9] p-4">
       <div 
         className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
           isMobile ? 'sticky top-4' : ''
