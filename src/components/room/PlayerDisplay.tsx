@@ -17,7 +17,7 @@ export const PlayerDisplay = ({ selectedPlayer, countdown }: PlayerDisplayProps)
           exit={{ opacity: 0 }}
           className="absolute inset-0 flex items-center justify-center"
         >
-          <span className="text-4xl font-bold text-[#F97316]">
+          <span className="text-4xl font-bold text-[#9C2FB0]">
             {countdown}
           </span>
         </motion.div>
@@ -28,7 +28,7 @@ export const PlayerDisplay = ({ selectedPlayer, countdown }: PlayerDisplayProps)
           animate={{ opacity: 1 }}
           className="absolute inset-0 flex items-center justify-center"
         >
-          <span className="text-2xl font-bold text-[#F97316]">
+          <span className="text-2xl font-bold text-[#000000]">
             {selectedPlayer.username}
           </span>
         </motion.div>
