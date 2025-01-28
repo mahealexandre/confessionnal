@@ -9,11 +9,11 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const actionPrompts = [
-  "Cite 3 choses que",
-  "Avoue",
-  "Dis-nous",
-  "Que penses-tu de",
-  "Préfères-tu",
+  "Cite 3 choses que (écrire la suite)",
+  "Avoue (écrire la suite)",
+  "Dis-nous (écrire la suite)",
+  "Que penses-tu de (écrire la suite)",
+  "Préfères-tu (écrire la suite)",
 ];
 
 const actionSchema = z.object({
