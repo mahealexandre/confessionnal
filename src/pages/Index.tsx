@@ -148,7 +148,7 @@ const Index = () => {
             ) : (
               <>
                 <Button
-                  className="w-full bg-[#F97316] hover:bg-[#EA580C] transition-colors"
+                  className="w-full bg-[#2E1F47] hover:bg-[#000000] transition-colors"
                   onClick={handleJoinRoom}
                 >
                   Rejoindre
