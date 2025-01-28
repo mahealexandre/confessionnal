@@ -1,13 +1,27 @@
 import { useState, useEffect } from "react";
 import { Player, PlayerAction } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
+import { useSpinAnimation } from "./useSpinAnimation";
+import { usePlayerSelection } from "./usePlayerSelection";
 
 export const useGameLogic = (roomId: string, players: Player[]) => {
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [currentAction, setCurrentAction] = useState<PlayerAction | null>(null);
   const [availableActions, setAvailableActions] = useState<PlayerAction[]>([]);
+  const {
+    isSpinning,
+    setIsSpinning,
+    countdown,
+    setCountdown,
+    startSpinAnimation
+  } = useSpinAnimation(roomId);
+
+  const {
+    selectedPlayer,
+    setSelectedPlayer,
+    currentAction,
+    setCurrentAction,
+    selectPlayer,
+    cleanupGameData
+  } = usePlayerSelection(roomId, players);
 
   useEffect(() => {
     const initializeActions = async () => {
@@ -61,7 +75,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
           filter: `room_id=eq.${roomId}`,
         },
         async (payload: any) => {
-          // Synchroniser l'état de l'animation
           if (payload.new.animation_state === 'spinning') {
             setIsSpinning(true);
             setCountdown(5);
@@ -80,7 +93,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
             setCountdown(null);
           }
 
-          // Synchroniser l'action courante
           if (payload.new.current_action_id) {
             try {
               const { data: action, error } = await supabase
@@ -106,55 +118,26 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     return () => {
       channel.unsubscribe();
     };
-  }, [roomId, players]);
+  }, [roomId, players, setIsSpinning, setCountdown]);
 
-  const startSpinAnimation = async () => {
+  const handleSpin = async () => {
     if (availableActions.length === 0) {
+      await cleanupGameData();
       return false;
     }
 
-    try {
-      // Mettre à jour l'état de l'animation pour tous les joueurs
-      const { error: animationError } = await supabase
-        .from("game_state")
-        .update({ animation_state: 'spinning' })
-        .eq("room_id", roomId);
+    const success = await startSpinAnimation();
+    if (!success) return false;
 
-      if (animationError) throw animationError;
+    setTimeout(async () => {
+      const finalIndex = Math.floor(Math.random() * players.length);
+      const finalPlayer = players[finalIndex];
+      const nextAction = availableActions[0];
 
-      setTimeout(async () => {
-        const finalIndex = Math.floor(Math.random() * players.length);
-        const finalPlayer = players[finalIndex];
-        const nextAction = availableActions[0];
+      await selectPlayer(finalPlayer, nextAction);
+    }, 5000);
 
-        const { error: updateError } = await supabase
-          .from("game_state")
-          .update({ 
-            current_player_id: finalPlayer.id,
-            current_action_id: nextAction.id,
-            animation_state: 'idle'
-          })
-          .eq("room_id", roomId);
-
-        if (updateError) throw updateError;
-
-        await supabase
-          .from("players")
-          .update({ is_selected: true })
-          .eq("id", finalPlayer.id);
-
-        await supabase
-          .from("player_actions")
-          .update({ used: true })
-          .eq("id", nextAction.id);
-
-      }, 5000);
-
-      return true;
-    } catch (error) {
-      console.error("Error during spin animation:", error);
-      return false;
-    }
+    return true;
   };
 
   return {
@@ -164,6 +147,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     countdown,
     currentAction,
     availableActions,
-    startSpinAnimation
+    startSpinAnimation: handleSpin
   };
 };
