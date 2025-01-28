@@ -52,10 +52,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     initializeActions();
   }, [roomId]);
 
-  // Subscribe to player selection updates
+  // Subscribe to player selection and action updates
   useEffect(() => {
     const channel = supabase
-      .channel("selected_player")
+      .channel("game_updates")
       .on(
         "postgres_changes",
         {
@@ -69,6 +69,29 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             const selectedPlayer = players.find(p => p.id === payload.new.id);
             if (selectedPlayer) {
               setSelectedPlayer(selectedPlayer);
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "game_state",
+          filter: `room_id=eq.${roomId}`,
+        },
+        async (payload: any) => {
+          if (payload.new.current_action_id) {
+            const { data: action } = await supabase
+              .from("player_actions")
+              .select("*")
+              .eq("id", payload.new.current_action_id)
+              .single();
+            
+            if (action) {
+              setCurrentAction(action);
+              setAvailableActions(prev => prev.filter(a => a.id !== action.id));
             }
           }
         }
@@ -107,31 +130,29 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       const finalPlayer = players[finalIndex];
       const nextAction = availableActions[0];
 
-      // Update player selection in database
-      const { error: updatePlayerError } = await supabase
-        .from("players")
-        .update({ is_selected: true })
-        .eq("id", finalPlayer.id);
+      // Update player selection and current action in database
+      const { error: updateError } = await supabase
+        .from("game_state")
+        .update({ 
+          current_player_id: finalPlayer.id,
+          current_action_id: nextAction.id
+        })
+        .eq("room_id", roomId);
 
-      if (!updatePlayerError) {
-        setSelectedPlayer(finalPlayer);
-        setCurrentAction(nextAction);
-        setIsSpinning(false);
+      if (!updateError) {
+        // Update player selection
+        await supabase
+          .from("players")
+          .update({ is_selected: true })
+          .eq("id", finalPlayer.id);
 
         // Mark action as used
-        const { error: updateActionError } = await supabase
+        await supabase
           .from("player_actions")
           .update({ used: true })
           .eq("id", nextAction.id);
 
-        if (!updateActionError) {
-          setAvailableActions(prev => prev.slice(1));
-        }
-
-        toast({
-          title: "Joueur sélectionné !",
-          description: `${finalPlayer.username} a été choisi !`,
-        });
+        setIsSpinning(false);
       }
     }, 5000);
   };
