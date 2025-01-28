@@ -97,17 +97,17 @@ const Index = () => {
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-white">
-            Le Confessional
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+            TOURNIKÉ
           </h1>
-          <p className="text-white">
+          <p className="text-gray-300">
             Créez une salle ou rejoignez-en une existante
           </p>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-white">Pseudo</Label>
+            <Label htmlFor="username">Pseudo</Label>
             <Input
               id="username"
               placeholder="Entrez votre pseudo"
@@ -118,7 +118,7 @@ const Index = () => {
 
           {isJoining && (
             <div className="space-y-2">
-              <Label htmlFor="roomCode" className="text-white">Code de la salle</Label>
+              <Label htmlFor="roomCode">Code de la salle</Label>
               <Input
                 id="roomCode"
                 placeholder="Entrez le code"
@@ -132,13 +132,14 @@ const Index = () => {
             {!isJoining ? (
               <>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-colors"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] transition-colors"
                   onClick={handleCreateRoom}
                 >
                   Créer une salle
                 </Button>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] text-white transition-colors"
+                  className="w-full"
+                  variant="outline"
                   onClick={() => setIsJoining(true)}
                 >
                   Rejoindre une salle
@@ -147,13 +148,13 @@ const Index = () => {
             ) : (
               <>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-colors"
+                  className="w-full bg-[#F97316] hover:bg-[#EA580C] transition-colors"
                   onClick={handleJoinRoom}
                 >
                   Rejoindre
                 </Button>
                 <Button
-                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors"
+                  className="w-full"
                   variant="outline"
                   onClick={() => setIsJoining(false)}
                 >
