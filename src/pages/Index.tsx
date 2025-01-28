@@ -90,24 +90,24 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#6a1e3a] bg-texture p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#6a1e3a] p-4">
       <div 
         className={`w-full max-w-md space-y-8 bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-xl ${
           isMobile ? 'sticky top-4' : ''
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-gradient font-playfair shadow-text">
-            Le Confessional
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-pink-300 bg-clip-text text-transparent">
+            TOURNIKÉ
           </h1>
-          <p className="text-white font-inter">
+          <p className="text-white">
             Créez une salle ou rejoignez-en une existante
           </p>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-white font-inter">Pseudo</Label>
+            <Label htmlFor="username" className="text-white">Pseudo</Label>
             <Input
               id="username"
               placeholder="Entrez votre pseudo"
@@ -118,7 +118,7 @@ const Index = () => {
 
           {isJoining && (
             <div className="space-y-2">
-              <Label htmlFor="roomCode" className="text-white font-inter">Code de la salle</Label>
+              <Label htmlFor="roomCode" className="text-white">Code de la salle</Label>
               <Input
                 id="roomCode"
                 placeholder="Entrez le code"
@@ -132,13 +132,14 @@ const Index = () => {
             {!isJoining ? (
               <>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-transform transform hover:scale-105 rounded-full shadow-lg"
+                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-colors"
                   onClick={handleCreateRoom}
                 >
                   Créer une salle
                 </Button>
                 <Button
-                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors rounded-full shadow-lg"
+                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors"
+                  variant="outline"
                   onClick={() => setIsJoining(true)}
                 >
                   Rejoindre une salle
@@ -147,13 +148,14 @@ const Index = () => {
             ) : (
               <>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-transform transform hover:scale-105 rounded-full shadow-lg"
+                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] transition-colors"
                   onClick={handleJoinRoom}
                 >
                   Rejoindre
                 </Button>
                 <Button
-                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors rounded-full shadow-lg"
+                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors"
+                  variant="outline"
                   onClick={() => setIsJoining(false)}
                 >
                   Retour
