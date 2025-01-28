@@ -22,7 +22,7 @@ const Index = () => {
 
     try {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-
+      
       const { data: room, error: roomError } = await supabase
         .from("rooms")
         .insert([{ code }])
@@ -33,19 +33,17 @@ const Index = () => {
 
       const { data: player, error: playerError } = await supabase
         .from("players")
-        .insert([
-          {
-            room_id: room.id,
-            username,
-            is_host: true,
-          },
-        ])
+        .insert([{ 
+          room_id: room.id,
+          username,
+          is_host: true
+        }])
         .select()
         .single();
 
       if (playerError) throw playerError;
 
-      localStorage.setItem("username", username);
+      localStorage.setItem('username', username);
       localStorage.setItem(`player_id_${room.id}`, player.id);
       console.log("Created player with ID:", player.id);
 
@@ -72,18 +70,16 @@ const Index = () => {
 
       const { data: player, error: playerError } = await supabase
         .from("players")
-        .insert([
-          {
-            room_id: room.id,
-            username,
-          },
-        ])
+        .insert([{ 
+          room_id: room.id,
+          username
+        }])
         .select()
         .single();
 
       if (playerError) throw playerError;
 
-      localStorage.setItem("username", username);
+      localStorage.setItem('username', username);
       localStorage.setItem(`player_id_${room.id}`, player.id);
       console.log("Created player with ID:", player.id);
 
@@ -95,11 +91,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div
+      <div 
         className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
-          isMobile
-            ? "fixed inset-0 m-auto max-h-[calc(100vh-2rem)] overflow-y-auto mx-4"
-            : "flex flex-col items-center"
+          isMobile ? 'fixed top-4 left-1/2 -translate-x-1/2 max-h-[calc(100vh-2rem)] overflow-y-auto' : ''
         }`}
       >
         <div className="text-center space-y-2">
@@ -168,7 +162,7 @@ const Index = () => {
                 </Button>
               </>
             )}
-
+            
             <GameRulesDialog />
           </div>
         </div>
