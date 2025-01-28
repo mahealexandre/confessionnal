@@ -46,33 +46,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     initializeActions();
   }, [roomId]);
 
-  // Add new effect to check for game end condition
-  useEffect(() => {
-    const checkGameEnd = async () => {
-      try {
-        const { data: unusedActions, error } = await supabase
-          .from("player_actions")
-          .select("*")
-          .eq("room_id", roomId)
-          .eq("used", false);
-
-        if (error) throw error;
-
-        // If there are no unused actions and we're not already spinning
-        if (unusedActions && unusedActions.length === 0 && !isSpinning) {
-          // Wait 5 seconds before stopping the game
-          setTimeout(async () => {
-            await cleanupGameData();
-          }, 5000);
-        }
-      } catch (error) {
-        console.error("Error checking game end:", error);
-      }
-    };
-
-    checkGameEnd();
-  }, [roomId, isSpinning, cleanupGameData]);
-
   useEffect(() => {
     const channel = supabase
       .channel("game_updates")
