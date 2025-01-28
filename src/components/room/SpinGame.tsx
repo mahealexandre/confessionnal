@@ -10,42 +10,11 @@ interface SpinGameProps {
   roomId: string;
 }
 
-interface PlayerAction {
-  id: string;
-  action_text: string;
-  player_id: string;
-}
-
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [actions, setActions] = useState<PlayerAction[]>([]);
-  const [currentAction, setCurrentAction] = useState<string | null>(null);
   const { toast } = useToast();
-
-  // Fetch and shuffle actions when component mounts
-  useEffect(() => {
-    const fetchAndShuffleActions = async () => {
-      const { data, error } = await supabase
-        .from("player_actions")
-        .select("*")
-        .eq("room_id", roomId)
-        .eq("used", false);
-
-      if (!error && data) {
-        // Shuffle the actions using Fisher-Yates algorithm
-        const shuffledActions = [...data];
-        for (let i = shuffledActions.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledActions[i], shuffledActions[j]] = [shuffledActions[j], shuffledActions[i]];
-        }
-        setActions(shuffledActions);
-      }
-    };
-
-    fetchAndShuffleActions();
-  }, [roomId]);
 
   useEffect(() => {
     const channel = supabase
@@ -72,6 +41,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
   }, [roomId]);
 
+  // Subscribe to player selection updates
   useEffect(() => {
     const channel = supabase
       .channel("selected_player")
@@ -101,7 +71,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
   const startSpinAnimation = async () => {
     setCountdown(5);
-    setCurrentAction(null);
     
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
@@ -113,25 +82,12 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       });
     }, 1000);
 
+    // After 5 seconds, select the final player
     setTimeout(async () => {
       const finalIndex = Math.floor(Math.random() * players.length);
       const finalPlayer = players[finalIndex];
 
-      // Select a random unused action
-      if (actions.length > 0) {
-        const action = actions[0];
-        setCurrentAction(action.action_text);
-        
-        // Mark the action as used
-        await supabase
-          .from("player_actions")
-          .update({ used: true })
-          .eq("id", action.id);
-
-        // Remove the used action from our local state
-        setActions(prevActions => prevActions.slice(1));
-      }
-
+      // Update player selection in database
       const { error: updateError } = await supabase
         .from("players")
         .update({ is_selected: true })
@@ -140,21 +96,16 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       if (!updateError) {
         setSelectedPlayer(finalPlayer);
         setIsSpinning(false);
+        toast({
+          title: "Joueur sélectionné !",
+          description: `${finalPlayer.username} a été choisi !`,
+        });
       }
     }, 5000);
   };
 
   const handleSpin = async () => {
     if (isSpinning) return;
-
-    // Reset previous player selection
-    if (selectedPlayer) {
-      await supabase
-        .from("players")
-        .update({ is_selected: false })
-        .eq("id", selectedPlayer.id);
-      setSelectedPlayer(null);
-    }
 
     await supabase
       .from("game_state")
@@ -190,16 +141,11 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     key={selectedPlayer.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="absolute inset-0 flex flex-col items-center justify-center space-y-2"
+                    className="absolute inset-0 flex items-center justify-center"
                   >
                     <span className="text-2xl font-bold text-[#F97316]">
                       {selectedPlayer.username}
                     </span>
-                    {currentAction && (
-                      <span className="text-lg text-gray-600">
-                        {currentAction}
-                      </span>
-                    )}
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -207,10 +153,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
             <Button
               onClick={handleSpin}
-              disabled={isSpinning || actions.length === 0}
+              disabled={isSpinning}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white text-xl py-6 px-12"
             >
-              {isSpinning ? "En cours..." : actions.length === 0 ? "Plus d'actions disponibles" : "Tourner !"}
+              {isSpinning ? "En cours..." : "Tourner !"}
             </Button>
           </div>
         </div>
