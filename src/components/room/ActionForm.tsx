@@ -175,7 +175,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
               ))}
               <Button
                 type="submit"
-                className="bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
+                className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Envoi en cours..." : "Suivant"}
