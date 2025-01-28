@@ -132,7 +132,7 @@ const Index = () => {
             {!isJoining ? (
               <>
                 <Button
-                  className="w-full bg-[#2E1F47] hover:bg-[#5e1934] transition-colors"
+                  className="w-full bg-[#2E1F47] hover:bg-[#000000] transition-colors"
                   onClick={handleCreateRoom}
                 >
                   Créer une salle
