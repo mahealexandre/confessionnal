@@ -99,3 +99,28 @@
     @apply bg-background text-foreground;
   }
 }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500&display=swap');
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #FFD700, #FF6347);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.shadow-text {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.bg-texture {
+  background: url('/path-to-texture.jpg') no-repeat center center;
+  background-size: cover;
+  background-blend-mode: overlay;
+}
