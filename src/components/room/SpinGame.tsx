@@ -68,7 +68,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
               <div className="w-full">
                 <Button
                   onClick={handleStopGame}
-                  variant="destructive"
+                  variant="outline"
                   className="w-full"
                 >
                   Arrêter la partie
