@@ -189,7 +189,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
             </p>
             <Button
               onClick={startGame}
-              className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+              className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
               disabled={!allPlayersSubmitted}
             >
               {allPlayersSubmitted ? "Commencer" : "En attente des autres joueurs..."}
