@@ -7,7 +7,7 @@ interface PlayerDisplayProps {
 }
 
 export const PlayerDisplay = ({ selectedPlayer, countdown }: PlayerDisplayProps) => (
-  <div className="relative h-32 border-4 border-[#F97316] rounded-xl overflow-hidden bg-white">
+  <div className="relative h-32 border-4 border-[#9C2FB0] rounded-xl overflow-hidden bg-white">
     <AnimatePresence mode="wait">
       {countdown !== null ? (
         <motion.div
