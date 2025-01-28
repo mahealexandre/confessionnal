@@ -10,35 +10,46 @@ interface SpinGameProps {
   roomId: string;
 }
 
+interface PlayerAction {
+  id: string;
+  action_text: string;
+  used: boolean;
+}
+
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [currentAction, setCurrentAction] = useState<PlayerAction | null>(null);
+  const [availableActions, setAvailableActions] = useState<PlayerAction[]>([]);
   const { toast } = useToast();
 
+  // Fetch and shuffle actions at game start
   useEffect(() => {
-    const channel = supabase
-      .channel("game_state")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "game_state",
-          filter: `room_id=eq.${roomId}`,
-        },
-        async (payload: any) => {
-          if (payload.new.animation_state === "spinning") {
-            setIsSpinning(true);
-            startSpinAnimation();
-          }
-        }
-      )
-      .subscribe();
+    const initializeActions = async () => {
+      const { data: actions, error } = await supabase
+        .from("player_actions")
+        .select("*")
+        .eq("room_id", roomId)
+        .eq("used", false);
 
-    return () => {
-      channel.unsubscribe();
+      if (error) {
+        console.error("Error fetching actions:", error);
+        return;
+      }
+
+      if (actions) {
+        // Fisher-Yates shuffle algorithm
+        const shuffledActions = [...actions];
+        for (let i = shuffledActions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledActions[i], shuffledActions[j]] = [shuffledActions[j], shuffledActions[i]];
+        }
+        setAvailableActions(shuffledActions);
+      }
     };
+
+    initializeActions();
   }, [roomId]);
 
   // Subscribe to player selection updates
@@ -70,6 +81,14 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId, players]);
 
   const startSpinAnimation = async () => {
+    if (availableActions.length === 0) {
+      toast({
+        title: "Fin de la partie !",
+        description: "Toutes les actions ont été réalisées.",
+      });
+      return;
+    }
+
     setCountdown(5);
     
     const countdownInterval = setInterval(() => {
@@ -82,20 +101,33 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       });
     }, 1000);
 
-    // After 5 seconds, select the final player
+    // After 5 seconds, select the final player and action
     setTimeout(async () => {
       const finalIndex = Math.floor(Math.random() * players.length);
       const finalPlayer = players[finalIndex];
+      const nextAction = availableActions[0];
 
       // Update player selection in database
-      const { error: updateError } = await supabase
+      const { error: updatePlayerError } = await supabase
         .from("players")
         .update({ is_selected: true })
         .eq("id", finalPlayer.id);
 
-      if (!updateError) {
+      if (!updatePlayerError) {
         setSelectedPlayer(finalPlayer);
+        setCurrentAction(nextAction);
         setIsSpinning(false);
+
+        // Mark action as used
+        const { error: updateActionError } = await supabase
+          .from("player_actions")
+          .update({ used: true })
+          .eq("id", nextAction.id);
+
+        if (!updateActionError) {
+          setAvailableActions(prev => prev.slice(1));
+        }
+
         toast({
           title: "Joueur sélectionné !",
           description: `${finalPlayer.username} a été choisi !`,
@@ -106,11 +138,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
   const handleSpin = async () => {
     if (isSpinning) return;
-
-    await supabase
-      .from("game_state")
-      .update({ animation_state: "spinning" })
-      .eq("room_id", roomId);
+    setIsSpinning(true);
+    startSpinAnimation();
   };
 
   return (
@@ -151,12 +180,18 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
               </AnimatePresence>
             </div>
 
+            {currentAction && (
+              <div className="mt-4 p-4 bg-white rounded-xl border-2 border-[#F97316]">
+                <p className="text-xl text-[#F97316]">{currentAction.action_text}</p>
+              </div>
+            )}
+
             <Button
               onClick={handleSpin}
-              disabled={isSpinning}
+              disabled={isSpinning || availableActions.length === 0}
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white text-xl py-6 px-12"
             >
-              {isSpinning ? "En cours..." : "Tourner !"}
+              {isSpinning ? "En cours..." : availableActions.length === 0 ? "Partie terminée" : "Tourner !"}
             </Button>
           </div>
         </div>
