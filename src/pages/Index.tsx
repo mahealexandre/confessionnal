@@ -93,10 +93,10 @@ const Index = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <style>
         {`
-        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap');
         
-        .font-unifraktur {
-          font-family: 'UnifrakturMaguntia', cursive;
+        .font-rubik-glitch {
+          font-family: 'Rubik Glitch', cursive;
         }
         `}
       </style>
@@ -106,7 +106,7 @@ const Index = () => {
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-unifraktur text-[#2E1F47]">
+          <h1 className="text-4xl font-rubik-glitch text-[#2E1F47]">
             Le Confessionnal
           </h1>
           <p className="text-gray-600">
