@@ -15,7 +15,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster position={isMobile ? "bottom-center" : "top-right"} />
+        <Toaster />
         <Sonner position={isMobile ? "bottom-center" : "top-right"} />
         <BrowserRouter>
           <Routes>
