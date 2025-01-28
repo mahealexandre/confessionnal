@@ -97,8 +97,8 @@ const Index = () => {
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-pink-300 bg-clip-text text-transparent">
-            TOURNIKÉ
+          <h1 className="text-4xl font-bold text-white">
+            Le Confessional
           </h1>
           <p className="text-white">
             Créez une salle ou rejoignez-en une existante
@@ -138,8 +138,7 @@ const Index = () => {
                   Créer une salle
                 </Button>
                 <Button
-                  className="w-full border border-white text-white hover:bg-white hover:text-[#6a1e3a] transition-colors"
-                  variant="outline"
+                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] text-white transition-colors"
                   onClick={() => setIsJoining(true)}
                 >
                   Rejoindre une salle
