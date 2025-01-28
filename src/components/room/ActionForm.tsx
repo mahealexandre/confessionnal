@@ -7,6 +7,7 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const actionSchema = z.object({
   actions: z.array(z.string().min(1, "Action is required")).length(5),
@@ -24,6 +25,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const isMobile = useIsMobile();
   
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
@@ -31,6 +33,15 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       actions: ["", "", "", "", ""],
     },
   });
+
+  const showToast = (title: string, description: string) => {
+    toast({
+      title,
+      description,
+      duration: 2000,
+      position: isMobile ? "bottom-center" : "top-right",
+    });
+  };
 
   const handleSubmit = async (values: ActionFormValues) => {
     if (isSubmitting) return;
@@ -113,17 +124,10 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       console.log("Player status updated successfully");
       setHasSubmitted(true);
 
-      toast({
-        title: "Actions soumises !",
-        description: "Vos actions ont été enregistrées avec succès.",
-      });
+      showToast("Actions soumises !", "Vos actions ont été enregistrées avec succès.");
     } catch (error) {
       console.error("Error in handleSubmit:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la soumission des actions.",
-      });
+      showToast("Erreur", "Une erreur est survenue lors de la soumission des actions.");
     } finally {
       setIsSubmitting(false);
     }
@@ -151,17 +155,10 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         onAllSubmitted();
       }
 
-      toast({
-        title: "La partie commence !",
-        description: "Tous les joueurs ont soumis leurs actions.",
-      });
+      showToast("La partie commence !", "Tous les joueurs ont soumis leurs actions.");
     } catch (error) {
       console.error("Error starting game:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de démarrer la partie.",
-      });
+      showToast("Erreur", "Impossible de démarrer la partie.");
     }
   };
 
@@ -169,7 +166,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+      <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}`}>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
             Saisissez vos actions

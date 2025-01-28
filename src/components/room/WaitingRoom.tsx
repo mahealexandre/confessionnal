@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/types/game";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface WaitingRoomProps {
   code: string;
@@ -10,10 +11,11 @@ interface WaitingRoomProps {
 
 export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className="max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+      <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}`}>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
             Salle d'attente
