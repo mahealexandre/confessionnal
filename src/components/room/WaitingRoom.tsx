@@ -15,9 +15,9 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className={max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}}>
+      <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}`}>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#2E1F47]">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
             Salle d'attente
           </h1>
           <div className="flex items-center justify-center gap-4">
@@ -46,7 +46,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               >
                 <span className="font-medium">{player.username}</span>
                 {player.is_host && (
-                  <span className="text-sm text-[#2E1F47]">Hôte</span>
+                  <span className="text-sm text-[#F97316]">Hôte</span>
                 )}
               </div>
             ))}
@@ -56,7 +56,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         <div className="flex justify-center">
           <Button
             onClick={onStartGame}
-            className="bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
+            className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
           >
             Lancer la partie
           </Button>

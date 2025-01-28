@@ -44,10 +44,10 @@ const Index = () => {
       if (playerError) throw playerError;
 
       localStorage.setItem('username', username);
-      localStorage.setItem(`player_id_${room.id}`, player.id);
+      localStorage.setItem(player_id_${room.id}, player.id);
       console.log("Created player with ID:", player.id);
 
-      navigate(`/room/${room.code}`);
+      navigate(/room/${room.code});
     } catch (error) {
       console.error("Error creating room:", error);
     }
@@ -80,10 +80,10 @@ const Index = () => {
       if (playerError) throw playerError;
 
       localStorage.setItem('username', username);
-      localStorage.setItem(`player_id_${room.id}`, player.id);
+      localStorage.setItem(player_id_${room.id}, player.id);
       console.log("Created player with ID:", player.id);
 
-      navigate(`/room/${room.code}`);
+      navigate(/room/${room.code});
     } catch (error) {
       console.error("Error joining room:", error);
     }
@@ -92,9 +92,9 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <div 
-        className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
+        className={w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
           isMobile ? 'sticky top-4' : ''
-        }`}
+        }}
       >
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-[#2E1F47]">
