@@ -40,7 +40,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
           <div className="text-center space-y-6">
             <h1 className="text-4xl font-bold text-[#2E1F47]">
-            Qui va faire quoi ? <span className="text-black">😈</span>
+            À qui le tour ? <span className="text-black">😈</span>
             </h1>
 
             <PlayerDisplay
