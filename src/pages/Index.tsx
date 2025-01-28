@@ -90,17 +90,17 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#6a1e3a] p-4">
       <div 
-        className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
+        className={`w-full max-w-md space-y-8 bg-white/30 backdrop-blur-md p-8 rounded-2xl shadow-xl ${
           isMobile ? 'sticky top-4' : ''
         }`}
       >
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
-            Le Confessionnal
+            TOURNIKÉ
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-300">
             Créez une salle ou rejoignez-en une existante
           </p>
         </div>
