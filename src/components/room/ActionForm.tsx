@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -22,7 +21,6 @@ interface ActionFormProps {
 }
 
 export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: ActionFormProps) => {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isMobile = useIsMobile();
@@ -33,14 +31,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       actions: ["", "", "", "", ""],
     },
   });
-
-  const showToast = (title: string, description: string) => {
-    toast({
-      title,
-      description,
-      duration: 2000,
-    });
-  };
 
   const handleSubmit = async (values: ActionFormValues) => {
     if (isSubmitting) return;
@@ -82,11 +72,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         .eq("room_id", roomId);
 
       if (existingActions && existingActions.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Vous avez déjà soumis vos actions.",
-        });
         return;
       }
 
@@ -123,10 +108,8 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       console.log("Player status updated successfully");
       setHasSubmitted(true);
 
-      showToast("Actions soumises !", "Vos actions ont été enregistrées avec succès.");
     } catch (error) {
       console.error("Error in handleSubmit:", error);
-      showToast("Erreur", "Une erreur est survenue lors de la soumission des actions.");
     } finally {
       setIsSubmitting(false);
     }
@@ -154,10 +137,8 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         onAllSubmitted();
       }
 
-      showToast("La partie commence !", "Tous les joueurs ont soumis leurs actions.");
     } catch (error) {
       console.error("Error starting game:", error);
-      showToast("Erreur", "Impossible de démarrer la partie.");
     }
   };
 
