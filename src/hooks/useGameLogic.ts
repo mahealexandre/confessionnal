@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSpinAnimation } from "./useSpinAnimation";
 import { usePlayerSelection } from "./usePlayerSelection";
 
-export const useGameLogic = (roomId, players) => {
-  const [availableActions, setAvailableActions] = useState([]);
-  const [wheelItems, setWheelItems] = useState([]);
+export const useGameLogic = (roomId: string, players: Player[]) => {
+  const [availableActions, setAvailableActions] = useState<PlayerAction[]>([]);
   const {
     isSpinning,
     setIsSpinning,
@@ -47,33 +46,106 @@ export const useGameLogic = (roomId, players) => {
     initializeActions();
   }, [roomId]);
 
+  // Add new effect to check for game end condition
   useEffect(() => {
-    if (isSpinning) {
-      // Prepare wheel items (names of players)
-      const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
-      setWheelItems(shuffledPlayers.map((player) => player.name));
+    const checkGameEnd = async () => {
+      try {
+        const { data: unusedActions, error } = await supabase
+          .from("player_actions")
+          .select("*")
+          .eq("room_id", roomId)
+          .eq("used", false);
 
-      const spinDuration = 5000; // 5 seconds
-      const interval = setInterval(() => {
-        setWheelItems((prev) => {
-          const [first, ...rest] = prev;
-          return [...rest, first];
-        });
-      }, 100);
+        if (error) throw error;
 
-      setTimeout(() => {
-        clearInterval(interval);
+        // If there are no unused actions and we're not already spinning
+        if (unusedActions && unusedActions.length === 0 && !isSpinning) {
+          // Wait 5 seconds before stopping the game
+          setTimeout(async () => {
+            await cleanupGameData();
+          }, 5000);
+        }
+      } catch (error) {
+        console.error("Error checking game end:", error);
+      }
+    };
 
-        // Select final player
-        const finalIndex = Math.floor(Math.random() * players.length);
-        const finalPlayer = players[finalIndex];
-        const nextAction = availableActions[0];
+    checkGameEnd();
+  }, [roomId, isSpinning, cleanupGameData]);
 
-        selectPlayer(finalPlayer, nextAction);
-        setIsSpinning(false);
-      }, spinDuration);
-    }
-  }, [isSpinning, players, availableActions, selectPlayer, setIsSpinning]);
+  useEffect(() => {
+    const channel = supabase
+      .channel("game_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload: any) => {
+          if (payload.new.is_selected) {
+            const selectedPlayer = players.find(p => p.id === payload.new.id);
+            if (selectedPlayer) {
+              setSelectedPlayer(selectedPlayer);
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "game_state",
+          filter: `room_id=eq.${roomId}`,
+        },
+        async (payload: any) => {
+          if (payload.new.animation_state === 'spinning') {
+            setIsSpinning(true);
+            setCountdown(5);
+            
+            const countdownInterval = setInterval(() => {
+              setCountdown((prev) => {
+                if (prev === null || prev <= 0) {
+                  clearInterval(countdownInterval);
+                  return null;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+          } else if (payload.new.animation_state === 'idle') {
+            setIsSpinning(false);
+            setCountdown(null);
+          }
+
+          if (payload.new.current_action_id) {
+            try {
+              const { data: action, error } = await supabase
+                .from("player_actions")
+                .select("*")
+                .eq("id", payload.new.current_action_id)
+                .single();
+              
+              if (error) throw error;
+              
+              if (action) {
+                setCurrentAction(action);
+                setAvailableActions(prev => prev.filter(a => a.id !== action.id));
+              }
+            } catch (error) {
+              console.error("Error fetching current action:", error);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roomId, players, setIsSpinning, setCountdown]);
 
   const handleSpin = async () => {
     if (availableActions.length === 0) {
@@ -84,8 +156,14 @@ export const useGameLogic = (roomId, players) => {
     const success = await startSpinAnimation();
     if (!success) return false;
 
-    setIsSpinning(true);
-    setCountdown(5); // Keep countdown logic for timing
+    setTimeout(async () => {
+      const finalIndex = Math.floor(Math.random() * players.length);
+      const finalPlayer = players[finalIndex];
+      const nextAction = availableActions[0];
+
+      await selectPlayer(finalPlayer, nextAction);
+    }, 5000);
+
     return true;
   };
 
@@ -96,7 +174,6 @@ export const useGameLogic = (roomId, players) => {
     countdown,
     currentAction,
     availableActions,
-    wheelItems, // Expose wheel items for UI rendering
     startSpinAnimation: handleSpin,
     cleanupGameData
   };
