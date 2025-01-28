@@ -61,6 +61,26 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
           filter: `room_id=eq.${roomId}`,
         },
         async (payload: any) => {
+          // Synchroniser l'état de l'animation
+          if (payload.new.animation_state === 'spinning') {
+            setIsSpinning(true);
+            setCountdown(5);
+            
+            const countdownInterval = setInterval(() => {
+              setCountdown((prev) => {
+                if (prev === null || prev <= 0) {
+                  clearInterval(countdownInterval);
+                  return null;
+                }
+                return prev - 1;
+              });
+            }, 1000);
+          } else if (payload.new.animation_state === 'idle') {
+            setIsSpinning(false);
+            setCountdown(null);
+          }
+
+          // Synchroniser l'action courante
           if (payload.new.current_action_id) {
             try {
               const { data: action, error } = await supabase
@@ -93,19 +113,15 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
       return false;
     }
 
-    setCountdown(5);
-    
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev === null || prev <= 0) {
-          clearInterval(countdownInterval);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
     try {
+      // Mettre à jour l'état de l'animation pour tous les joueurs
+      const { error: animationError } = await supabase
+        .from("game_state")
+        .update({ animation_state: 'spinning' })
+        .eq("room_id", roomId);
+
+      if (animationError) throw animationError;
+
       setTimeout(async () => {
         const finalIndex = Math.floor(Math.random() * players.length);
         const finalPlayer = players[finalIndex];
@@ -115,7 +131,8 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
           .from("game_state")
           .update({ 
             current_player_id: finalPlayer.id,
-            current_action_id: nextAction.id
+            current_action_id: nextAction.id,
+            animation_state: 'idle'
           })
           .eq("room_id", roomId);
 
@@ -131,13 +148,11 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
           .update({ used: true })
           .eq("id", nextAction.id);
 
-        setIsSpinning(false);
       }, 5000);
 
       return true;
     } catch (error) {
       console.error("Error during spin animation:", error);
-      setIsSpinning(false);
       return false;
     }
   };
