@@ -38,7 +38,7 @@ export const usePlayerSelection = (roomId: string, players: Player[]) => {
 
   const cleanupGameData = async () => {
     try {
-      // Supprimer les données dans l'ordre pour respecter les contraintes de clés étrangères
+      // Delete data in order to respect foreign key constraints
       await supabase
         .from("game_state")
         .delete()
@@ -59,7 +59,7 @@ export const usePlayerSelection = (roomId: string, players: Player[]) => {
         .delete()
         .eq("id", roomId);
 
-      // Rediriger vers la page d'accueil
+      // Navigate to home page
       navigate("/");
     } catch (error) {
       console.error("Error cleaning up game data:", error);

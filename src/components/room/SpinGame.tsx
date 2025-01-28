@@ -17,7 +17,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     countdown,
     currentAction,
     availableActions,
-    startSpinAnimation
+    startSpinAnimation,
+    cleanupGameData
   } = useGameLogic(roomId, players);
 
   const handleSpin = async () => {
@@ -27,6 +28,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     if (!success) {
       setIsSpinning(false);
     }
+  };
+
+  const handleStopGame = async () => {
+    await cleanupGameData();
   };
 
   return (
@@ -45,17 +50,29 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
             <ActionDisplay currentAction={currentAction} />
 
-            <Button
-              onClick={handleSpin}
-              disabled={isSpinning || availableActions.length === 0}
-              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white text-xl py-6 px-12"
-            >
-              {isSpinning 
-                ? "En cours..." 
-                : availableActions.length === 0 
-                  ? "Partie terminée" 
-                  : "Tourner !"}
-            </Button>
+            <div className="space-y-4">
+              <Button
+                onClick={handleSpin}
+                disabled={isSpinning || availableActions.length === 0}
+                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white text-xl py-6 px-12"
+              >
+                {isSpinning 
+                  ? "En cours..." 
+                  : availableActions.length === 0 
+                    ? "Partie terminée" 
+                    : "Tourner !"}
+              </Button>
+
+              <div>
+                <Button
+                  onClick={handleStopGame}
+                  variant="destructive"
+                  className="text-lg py-4 px-8"
+                >
+                  Arrêter la partie
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
