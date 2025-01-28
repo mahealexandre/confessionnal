@@ -32,6 +32,14 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
     },
   });
 
+  const actionPrompts = [
+    "Cite 3",
+    "Avoue",
+    "Dis-nous",
+    "Que penses-tu",
+    "Préfères-tu"
+  ];
+
   const handleSubmit = async (values: ActionFormValues) => {
     if (isSubmitting) return;
     
@@ -167,7 +175,10 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder={`Action ${index + 1} (Ex: Citer 3 personnes que...)`} {...field} />
+                        <Input 
+                          placeholder={`${actionPrompts[index]}...`} 
+                          {...field} 
+                        />
                       </FormControl>
                     </FormItem>
                   )}
