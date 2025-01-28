@@ -167,7 +167,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder={`Action ${index + 1}`} {...field} />
+                        <Input placeholder={`Action ${index + 1} (Ex: Citer 3 personnes que...)`} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
