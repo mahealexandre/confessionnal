@@ -39,7 +39,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       title,
       description,
       duration: 2000,
-      position: isMobile ? "bottom-center" : "top-right",
     });
   };
 
