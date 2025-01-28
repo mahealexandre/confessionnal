@@ -21,7 +21,7 @@ export const GameRulesDialog = () => {
         <DialogHeader>
           <DialogTitle>Règles du jeu</DialogTitle>
           <DialogDescription>
-            Voici comment jouer à TOURNIKÉ
+            Voici comment jouer à TOURNIQUÉ
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
