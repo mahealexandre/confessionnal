@@ -97,7 +97,7 @@ const Index = () => {
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold text-[#6a1e3a]">
             Le Confessionnal
           </h1>
           <p className="text-gray-600">
@@ -132,7 +132,7 @@ const Index = () => {
             {!isJoining ? (
               <>
                 <Button
-                  className="w-full bg-[#F97316] hover:bg-[#EA580C] transition-colors"
+                  className="w-full bg-[#6a1e3a] hover:bg-[#5e1934] transition-colors"
                   onClick={handleCreateRoom}
                 >
                   Créer une salle
