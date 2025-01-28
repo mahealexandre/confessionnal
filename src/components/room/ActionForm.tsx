@@ -8,6 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const actionPrompts = [
+  "Cite 3 choses que",
+  "Avoue",
+  "Dis-nous",
+  "Que penses-tu de",
+  "Préfères-tu",
+];
+
 const actionSchema = z.object({
   actions: z.array(z.string().min(1, "Action is required")).length(5),
 });
@@ -24,32 +32,22 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isMobile = useIsMobile();
-  
+
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
     defaultValues: {
-      actions: ["", "", "", "", ""],
+      actions: actionPrompts, // Pré-remplit les champs avec les phrases
     },
   });
 
-  const actionPrompts = [
-    "Cite 3",
-    "Avoue",
-    "Dis-nous",
-    "Que penses-tu",
-    "Préfères-tu"
-  ];
-
   const handleSubmit = async (values: ActionFormValues) => {
     if (isSubmitting) return;
-    
+
     try {
       setIsSubmitting(true);
       console.log("Starting action submission with values:", values);
-      
-      const roomCode = window.location.pathname.split('/').pop();
-      console.log("Room code:", roomCode);
 
+      const roomCode = window.location.pathname.split('/').pop();
       const { data: roomData, error: roomError } = await supabase
         .from("rooms")
         .select("id")
@@ -62,17 +60,13 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       }
 
       const roomId = roomData.id;
-      console.log("Room UUID:", roomId);
-
       const playerId = localStorage.getItem(`player_id_${roomId}`);
-      console.log("Player ID:", playerId);
 
       if (!playerId) {
         console.error("Missing player ID");
         throw new Error("Missing player ID");
       }
 
-      // Check if player has already submitted actions
       const { data: existingActions } = await supabase
         .from("player_actions")
         .select("id")
@@ -86,10 +80,8 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       const actionsToInsert = values.actions.map(action => ({
         player_id: playerId,
         room_id: roomId,
-        action_text: action
+        action_text: action,
       }));
-
-      console.log("Inserting actions:", actionsToInsert);
 
       const { error: insertError } = await supabase
         .from("player_actions")
@@ -100,9 +92,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         throw insertError;
       }
 
-      console.log("Actions inserted successfully");
-
-      // Update player's has_submitted status
       const { error: updateError } = await supabase
         .from("players")
         .update({ has_submitted: true })
@@ -113,7 +102,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         throw updateError;
       }
 
-      console.log("Player status updated successfully");
       setHasSubmitted(true);
 
     } catch (error) {
@@ -167,7 +155,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         {!hasSubmitted ? (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {form.watch("actions").map((_, index) => (
+              {form.watch("actions").map((value, index) => (
                 <FormField
                   key={index}
                   control={form.control}
@@ -175,9 +163,10 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input 
-                          placeholder={`${actionPrompts[index]}...`} 
-                          {...field} 
+                        <Input
+                          {...field}
+                          value={field.value} // Utilise la valeur actuelle
+                          onChange={(e) => field.onChange(e.target.value)} // Met à jour la valeur
                         />
                       </FormControl>
                     </FormItem>
