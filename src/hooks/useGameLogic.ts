@@ -147,6 +147,7 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     countdown,
     currentAction,
     availableActions,
-    startSpinAnimation: handleSpin
+    startSpinAnimation: handleSpin,
+    cleanupGameData
   };
 };
