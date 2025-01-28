@@ -21,7 +21,7 @@ export const GameRulesDialog = () => {
         <DialogHeader>
           <DialogTitle>Règles du jeu</DialogTitle>
           <DialogDescription>
-            Voici comment jouer au jeu des actions
+            Voici comment jouer à TOURNIQUÉ
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
@@ -47,7 +47,7 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">3. Déroulement du jeu</h3>
               <p>
-                À tour de rôle, les joueurs cliquent sur le bouton "Spin" pour
+                À tour de rôle, les joueurs cliquent sur le bouton "Tourner" pour
                 faire tourner la roue. La roue s'arrête sur un joueur au hasard et
                 une action est révélée. Le joueur sélectionné doit alors réaliser
                 l'action indiquée.
