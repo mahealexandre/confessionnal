@@ -91,13 +91,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
+      <style>
+        {`
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+        
+        .font-unifraktur {
+          font-family: 'UnifrakturMaguntia', cursive;
+        }
+        `}
+      </style>
       <div 
         className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
           isMobile ? 'sticky top-4' : ''
         }`}
       >
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#2E1F47]">
+          <h1 className="text-4xl font-unifraktur text-[#2E1F47]">
             Le Confessionnal
           </h1>
           <p className="text-gray-600">
