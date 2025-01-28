@@ -46,7 +46,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               >
                 <span className="font-medium">{player.username}</span>
                 {player.is_host && (
-                  <span className="text-sm text-[#F97316]">Hôte</span>
+                  <span className="text-sm text-[#2E1F47]">Hôte</span>
                 )}
               </div>
             ))}
@@ -56,7 +56,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         <div className="flex justify-center">
           <Button
             onClick={onStartGame}
-            className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+            className="bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
           >
             Lancer la partie
           </Button>
