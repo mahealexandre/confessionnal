@@ -98,7 +98,7 @@ const Index = () => {
       >
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
-            TOURNIKÉ
+            Le Confessionnal
           </h1>
           <p className="text-gray-600">
             Créez une salle ou rejoignez-en une existante
