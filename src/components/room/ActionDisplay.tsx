@@ -9,7 +9,7 @@ export const ActionDisplay = ({ currentAction }: ActionDisplayProps) => {
 
   return (
     <div className="mt-4 p-4 bg-white rounded-xl border-2 border-[#F97316]">
-      <p className="text-xl text-[#F97316]">{currentAction.action_text}</p>
+      <p className="text-xl text-[#000000]">{currentAction.action_text}</p>
     </div>
   );
 };
