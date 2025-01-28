@@ -80,18 +80,12 @@ export default {
         'spin': {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(1440deg)' }
-        },
-        'scale-pop': {
-          '0%': { transform: 'scale(0.9)', opacity: '0' },
-          '70%': { transform: 'scale(1.05)', opacity: '0.7' },
-          '100%': { transform: 'scale(1)', opacity: '1' }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'spin': 'spin 3s ease-out',
-        'scale-pop': 'scale-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        'spin': 'spin 3s ease-out'
       }
     }
   },

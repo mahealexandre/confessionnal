@@ -92,8 +92,8 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <div 
-        className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl animate-scale-pop ${
-          isMobile ? 'fixed top-4 left-1/2 -translate-x-1/2 max-h-[calc(100vh-2rem)] overflow-y-auto mx-4 w-[calc(100%-2rem)]' : ''
+        className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
+          isMobile ? 'fixed top-4 left-1/2 -translate-x-1/2 max-h-[calc(100vh-2rem)] overflow-y-auto' : ''
         }`}
       >
         <div className="text-center space-y-2">
