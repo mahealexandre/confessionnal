@@ -144,7 +144,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
     <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}`}>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold text-[#2E1F47]">
             Saisissez vos actions
           </h1>
           <p className="text-gray-600">
@@ -175,7 +175,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
               ))}
               <Button
                 type="submit"
-                className="w-full bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+                className="bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Envoi en cours..." : "Suivant"}
