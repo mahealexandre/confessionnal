@@ -138,7 +138,7 @@ const Index = () => {
                   Créer une salle
                 </Button>
                 <Button
-                  className="w-full bg-[#A83E5C] hover:bg-[#922F4E] text-white transition-colors"
+                  variant="outline" className="w-full"
                   onClick={() => setIsJoining(true)}
                 >
                   Rejoindre une salle
