@@ -132,14 +132,14 @@ const Index = () => {
                   className="w-full bg-[#2E1F47] hover:bg-[#000000] transition-colors"
                   onClick={handleCreateRoom}
                 >
-                  Créer une salle
+                  Créer
                 </Button>
                 <Button
                   className="w-full"
                   variant="outline"
                   onClick={() => setIsJoining(true)}
                 >
-                  Rejoindre une salle
+                  Rejoindre
                 </Button>
               </>
             ) : (
