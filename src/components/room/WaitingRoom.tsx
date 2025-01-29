@@ -18,7 +18,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-[#2E1F47]">
-            Salle d'attente
+            Salle d'attente ⏳
           </h1>
           <div className="flex items-center justify-center gap-4">
             <p className="text-gray-600">Code de la salle:</p>
@@ -37,7 +37,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">Joueurs</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Joueurs 👥​</h2>
           <div className="grid gap-2">
             {players.map((player) => (
               <div
