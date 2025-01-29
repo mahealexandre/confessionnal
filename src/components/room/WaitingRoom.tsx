@@ -17,7 +17,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#2E1F47]">
+          <h1 className="text-4xl font-bold text-[#ff3aa7]">
             Salle d'attente ⏳
           </h1>
           <div className="flex items-center justify-center gap-4">
@@ -56,7 +56,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         <div className="flex justify-center">
           <Button
             onClick={onStartGame}
-            className="bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
+            className="bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white"
           >
             Lancer la partie
           </Button>
