@@ -98,11 +98,8 @@ const Index = () => {
       >
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-[#2E1F47]">
-            Le Confessionnal 🤫
+            Confessionnal 🤫
           </h1>
-          <p className="text-gray-600">
-            Créez une salle ou rejoignez-en une existante
-          </p>
         </div>
 
         <div className="space-y-4">
