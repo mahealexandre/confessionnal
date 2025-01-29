@@ -14,7 +14,7 @@ export const GameRulesDialog = () => {
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
-          Règles du jeu
+          Règles
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[90vw] max-h-[80vh] sm:max-w-[600px]">
