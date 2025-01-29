@@ -5,11 +5,11 @@ interface ActionDisplayProps {
 }
 
 export const ActionDisplay = ({ currentAction }: ActionDisplayProps) => {
-  if (!currentAction) return null;
-
   return (
-    <div className="mt-4 p-4 bg-white rounded-xl border-2 border-[#9C2FB0]">
-      <p className="text-xl text-[#000000]">{currentAction.action_text}</p>
+    <div className="mt-4 p-4 bg-white rounded-xl border-2 border-[#9C2FB0] w-64 h-32 flex items-center justify-center overflow-hidden">
+      <p className="text-xl text-[#000000] text-ellipsis overflow-hidden text-center break-words">
+        {currentAction ? currentAction.action_text : "Aucune action en cours"}
+      </p>
     </div>
   );
 };
