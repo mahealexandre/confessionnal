@@ -100,7 +100,7 @@ const Index = () => {
           <img 
             src="/confessionnal_crop.png" 
             alt="Confessionnal" 
-            className="mx-auto max-w-[80%] sm:max-w-[60%] h-auto"
+            className="mx-auto max-w-[85%] sm:max-w-[70%] h-auto"
           />
         </div>
 
