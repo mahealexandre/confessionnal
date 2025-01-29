@@ -103,7 +103,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-[#2E1F47]">
-            Saisissez vos actions
+            Saisissez vos actions 📝
           </h1>
           <p className="text-gray-600">
             {submittedCount} / {totalPlayers} joueurs ont soumis leurs actions
