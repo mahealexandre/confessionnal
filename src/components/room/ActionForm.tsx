@@ -36,7 +36,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
   const form = useForm<ActionFormValues>({
     resolver: zodResolver(actionSchema),
     defaultValues: {
-      actions: actionPrompts, // Pré-remplit les champs avec les phrases
+      actions: actionPrompts,
     },
   });
 
@@ -141,8 +141,8 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
   const allPlayersSubmitted = submittedCount >= totalPlayers;
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'sticky top-4' : ''}`}>
+    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
+      <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold text-[#2E1F47]">
             Saisissez vos actions
@@ -165,8 +165,8 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
                       <FormControl>
                         <Input
                           {...field}
-                          value={field.value} // Utilise la valeur actuelle
-                          onChange={(e) => field.onChange(e.target.value)} // Met à jour la valeur
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                     </FormItem>

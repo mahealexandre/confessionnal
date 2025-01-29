@@ -35,12 +35,12 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
-      <div className="max-w-2xl mx-auto space-y-8 sticky top-4">
+    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
+      <div className="max-w-2xl mx-auto space-y-8 w-full">
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
           <div className="text-center space-y-6">
             <h1 className="text-4xl font-bold text-[#2E1F47]">
-            À qui le tour ? <span className="text-black">😈</span>
+              À qui le tour ? <span className="text-black">😈</span>
             </h1>
 
             <PlayerDisplay
