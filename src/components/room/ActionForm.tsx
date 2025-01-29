@@ -102,7 +102,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#2E1F47]">
+          <h1 className="text-4xl font-bold text-[#ff3aa7]">
             Saisissez vos actions 📝
           </h1>
           <p className="text-gray-600">
