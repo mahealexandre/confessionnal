@@ -90,10 +90,10 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4">
+    <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div 
         className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
-          isMobile ? 'sticky top-4' : ''
+          isMobile ? 'mx-4' : 'mx-auto'
         }`}
       >
         <div className="text-center space-y-2">

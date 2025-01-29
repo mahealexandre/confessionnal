@@ -35,7 +35,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
+    <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div className="max-w-2xl mx-auto space-y-8 w-full">
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
           <div className="text-center space-y-6">
