@@ -71,6 +71,10 @@ export const GameRulesDialog = () => {
               </p>
             </div>
           </div>
+          
+          <div className="mt-4 text-center text-sm text-gray-500">
+            <p>Une application by <a href="https://mahealexandre.com" target="_blank" rel="noopener noreferrer" className="text-[#ff3aa7]">Alexandre Mahé</a></p>
+          </div>
         </ScrollArea>
       </DialogContent>
     </Dialog>
