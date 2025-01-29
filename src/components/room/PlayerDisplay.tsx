@@ -8,11 +8,13 @@ interface PlayerDisplayProps {
 }
 
 export const PlayerDisplay = ({ selectedPlayer, countdown, players = [] }: PlayerDisplayProps) => {
-  // If we're in countdown mode and have players, show a random player name
-  const getRandomPlayerName = () => {
-    if (!players.length) return "";
-    const randomIndex = Math.floor(Math.random() * players.length);
-    return players[randomIndex].username;
+  // Array of emojis to display during countdown
+  const emojis = ["🥵", "🤭", "🤔", "🤫", "🫣", "🙊", "😏"];
+
+  // Get a random emoji for the countdown
+  const getRandomEmoji = () => {
+    const randomIndex = Math.floor(Math.random() * emojis.length);
+    return emojis[randomIndex];
   };
 
   return (
@@ -26,8 +28,8 @@ export const PlayerDisplay = ({ selectedPlayer, countdown, players = [] }: Playe
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <span className="text-2xl font-bold text-[#9C2FB0]">
-              {getRandomPlayerName()}
+            <span className="text-4xl font-bold">
+              {getRandomEmoji()}
             </span>
           </motion.div>
         ) : selectedPlayer ? (
