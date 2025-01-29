@@ -18,7 +18,7 @@ export const PlayerDisplay = ({ selectedPlayer, countdown, players = [] }: Playe
   };
 
   return (
-    <div className="relative h-32 border-4 border-[#9C2FB0] rounded-xl overflow-hidden bg-white">
+    <div className="relative h-32 border-4 border-[#b40064] rounded-xl overflow-hidden bg-white">
       <AnimatePresence mode="wait">
         {countdown !== null ? (
           <motion.div
