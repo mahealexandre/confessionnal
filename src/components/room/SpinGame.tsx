@@ -62,7 +62,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     ? "En cours..." 
                     : availableActions.length === 0 
                       ? "Partie terminée" 
-                      : "Tourner !"}
+                      : "Lancer !"}
                 </Button>
               </div>
 
