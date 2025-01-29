@@ -100,7 +100,7 @@ const Index = () => {
           {isMobile ? (
             <img src="/confessionnal_crop.png" alt="Confessionnal" className="mx-auto" />
           ) : (
-            <img src="/confessionnal_long.png" alt="Confessionnal" className="mx-auto" />
+            <img src="/confessionnal_crop.png" alt="Confessionnal" className="mx-auto" />
           )}
         </div>
 
