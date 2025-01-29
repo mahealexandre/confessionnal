@@ -39,7 +39,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       <div className="max-w-2xl mx-auto space-y-8 w-full">
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
           <div className="text-center space-y-6">
-            <h1 className="text-4xl font-bold text-[#2E1F47]">
+            <h1 className="text-4xl font-bold text-[#ff3aa7]">
               À qui le tour ? <span className="text-black">😈</span>
             </h1>
 
@@ -56,7 +56,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                 <Button
                   onClick={handleSpin}
                   disabled={isSpinning || availableActions.length === 0}
-                  className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white text-xl py-6"
+                  className="w-full bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white text-xl py-6"
                 >
                   {isSpinning 
                     ? "En cours..." 
