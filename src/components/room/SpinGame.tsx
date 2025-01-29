@@ -46,6 +46,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             <PlayerDisplay
               selectedPlayer={selectedPlayer}
               countdown={countdown}
+              players={players}
             />
 
             <ActionDisplay currentAction={currentAction} />
