@@ -90,7 +90,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
+    <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center flex-col">
       <div 
         className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
           isMobile ? "mx-4" : "mx-auto"
@@ -165,6 +165,13 @@ const Index = () => {
             <GameRulesDialog />
           </div>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 text-center text-sm">
+        <p>
+          By <a href="https://mahealexandre.com" target="_blank" rel="noopener noreferrer" className="text-[#ff3aa7]">Alexandre Mahé</a>
+        </p>
       </div>
     </div>
   );
