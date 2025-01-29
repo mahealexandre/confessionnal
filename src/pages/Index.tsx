@@ -96,13 +96,12 @@ const Index = () => {
           isMobile ? 'mx-4' : 'mx-auto'
         }`}
       >
-        <style>
-          {`@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');`}
-        </style>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#ff3aa7]" style={{ fontFamily: 'Anton, sans-serif' }}>
-            confessionnal 🤫
-          </h1>
+          {isMobile ? (
+            <img src="/public/confessionnal.png" alt="Confessionnal" className="mx-auto" />
+          ) : (
+            <img src="/public/confessionnal_long.png" alt="Confessionnal" className="mx-auto" />
+          )}
         </div>
 
         <div className="space-y-4">
@@ -132,7 +131,7 @@ const Index = () => {
             {!isJoining ? (
               <>
                 <Button
-                  className="w-full bg-[#ff3aa7] hover:bg-[#b40064] transition-colors"
+                  className="w-full bg-[#2E1F47] hover:bg-[#000000] transition-colors"
                   onClick={handleCreateRoom}
                 >
                   Créer
