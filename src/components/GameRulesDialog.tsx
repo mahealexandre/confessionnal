@@ -21,7 +21,7 @@ export const GameRulesDialog = () => {
         <DialogHeader>
           <DialogTitle>Règles du jeu</DialogTitle>
           <DialogDescription>
-            Voici comment jouer au Confessionnal
+            Voici comment jouer à Confessionnal
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="h-[60vh] pr-4">
@@ -29,7 +29,7 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">1. Création de la partie</h3>
               <p>
-                Un joueur crée une salle et partage le code avec les autres
+                Un joueur créer une salle et partage le code avec les autres
                 participants. Les autres joueurs peuvent rejoindre la salle avec ce
                 code.
               </p>
@@ -38,27 +38,26 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">2. Saisie des actions</h3>
               <p>
-                Chaque joueur doit écrire 5 actions différentes. Ces actions
-                peuvent être drôles, créatives ou challengeantes. Une fois que tous
-                les joueurs ont soumis leurs actions, la partie peut commencer.
+                Chaque joueur doit écrire 5 défis/questions différentes (ex: Cite 2 personnes que tu méprises).
+                Une fois que tous les joueurs ont soumis leurs défis, la partie peut commencer.
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">3. Déroulement du jeu</h3>
               <p>
-                À tour de rôle, les joueurs cliquent sur le bouton "Tourner" pour
-                faire tourner la roue. La roue s'arrête sur un joueur au hasard et
-                une action est révélée. Le joueur sélectionné doit alors réaliser
-                l'action indiquée.
+                Les joueurs doivent cliquer sur le bouton "Lancer" pour
+                faire "tourner la roue". Un joueur est choisi au hasard et
+                un défi est révélé. Le joueur sélectionné doit alors réaliser
+                le défi indiqué / se confesser.
               </p>
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">4. Actions uniques</h3>
               <p>
-                Chaque action ne peut être réalisée qu'une seule fois. Une fois
-                qu'une action a été effectuée, elle est marquée comme utilisée et
+                Chaque défi ne peut être réalisé qu'une seule fois. Une fois
+                qu'un défi a été effectué, il est marqué comme utilisé et
                 ne réapparaîtra plus dans le jeu.
               </p>
             </div>
@@ -66,25 +65,10 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">5. Fin de la partie</h3>
               <p>
-                La partie se termine lorsque toutes les actions ont été réalisées.
+                La partie se termine lorsque tous les défis ont été réalisés.
                 Les joueurs peuvent également décider d'arrêter la partie à tout
                 moment en cliquant sur le bouton "Arrêter la partie".
               </p>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-2">Conseils</h3>
-              <ul className="list-disc pl-4 space-y-2">
-                <li>
-                  Soyez créatifs dans vos actions, mais restez respectueux
-                </li>
-                <li>
-                  Évitez les actions dangereuses ou inappropriées
-                </li>
-                <li>
-                  Amusez-vous et profitez du moment avec vos amis !
-                </li>
-              </ul>
             </div>
           </div>
         </ScrollArea>
