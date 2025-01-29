@@ -98,9 +98,9 @@ const Index = () => {
       >
         <div className="text-center space-y-2">
           {isMobile ? (
-            <img src="/public/confessionnal.png" alt="Confessionnal" className="mx-auto" />
+            <img src="/confessionnal.png" alt="Confessionnal" className="mx-auto" />
           ) : (
-            <img src="/public/confessionnal_long.png" alt="Confessionnal" className="mx-auto" />
+            <img src="/confessionnal_long.png" alt="Confessionnal" className="mx-auto" />
           )}
         </div>
 
