@@ -1,26 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const actionPrompts = [
-  "Cite 3 choses que (écrire la suite)",
-  "Avoue (écrire la suite)",
-  "Dis-nous (écrire la suite)",
-  "Que penses-tu de (écrire la suite)",
-  "Préfères-tu (écrire la suite)",
-];
-
-const actionSchema = z.object({
-  actions: z.array(z.string().min(1, "Action is required")).length(5),
-});
-
-type ActionFormValues = z.infer<typeof actionSchema>;
+import { ActionFormContent } from "./action-form/ActionFormContent";
+import { SubmissionStatus } from "./action-form/SubmissionStatus";
+import { ActionFormValues } from "./action-form/types";
 
 interface ActionFormProps {
   submittedCount: number;
@@ -33,20 +16,11 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const isMobile = useIsMobile();
 
-  const form = useForm<ActionFormValues>({
-    resolver: zodResolver(actionSchema),
-    defaultValues: {
-      actions: actionPrompts,
-    },
-  });
-
   const handleSubmit = async (values: ActionFormValues) => {
     if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
-      console.log("Starting action submission with values:", values);
-
       const roomCode = window.location.pathname.split('/').pop();
       const { data: roomData, error: roomError } = await supabase
         .from("rooms")
@@ -54,18 +28,12 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         .eq("code", roomCode)
         .single();
 
-      if (roomError) {
-        console.error("Error fetching room:", roomError);
-        throw new Error("Could not find room");
-      }
+      if (roomError) throw new Error("Could not find room");
 
       const roomId = roomData.id;
       const playerId = localStorage.getItem(`player_id_${roomId}`);
 
-      if (!playerId) {
-        console.error("Missing player ID");
-        throw new Error("Missing player ID");
-      }
+      if (!playerId) throw new Error("Missing player ID");
 
       const { data: existingActions } = await supabase
         .from("player_actions")
@@ -73,9 +41,7 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         .eq("player_id", playerId)
         .eq("room_id", roomId);
 
-      if (existingActions && existingActions.length > 0) {
-        return;
-      }
+      if (existingActions && existingActions.length > 0) return;
 
       const actionsToInsert = values.actions.map(action => ({
         player_id: playerId,
@@ -87,23 +53,16 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         .from("player_actions")
         .insert(actionsToInsert);
 
-      if (insertError) {
-        console.error("Error inserting actions:", insertError);
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       const { error: updateError } = await supabase
         .from("players")
         .update({ has_submitted: true })
         .eq("id", playerId);
 
-      if (updateError) {
-        console.error("Error updating player status:", updateError);
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
       setHasSubmitted(true);
-
     } catch (error) {
       console.error("Error in handleSubmit:", error);
     } finally {
@@ -132,7 +91,6 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
       if (onAllSubmitted) {
         onAllSubmitted();
       }
-
     } catch (error) {
       console.error("Error starting game:", error);
     }
@@ -153,48 +111,17 @@ export const ActionForm = ({ submittedCount, totalPlayers, onAllSubmitted }: Act
         </div>
 
         {!hasSubmitted ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-              {form.watch("actions").map((value, index) => (
-                <FormField
-                  key={index}
-                  control={form.control}
-                  name={`actions.${index}`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              ))}
-              <Button
-                type="submit"
-                className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Envoi en cours..." : "Suivant"}
-              </Button>
-            </form>
-          </Form>
+          <ActionFormContent
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
         ) : (
-          <div className="space-y-4">
-            <p className="text-center text-gray-600">
-              Vos actions ont été enregistrées. En attente des autres joueurs...
-            </p>
-            <Button
-              onClick={startGame}
-              className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
-              disabled={!allPlayersSubmitted}
-            >
-              {allPlayersSubmitted ? "Commencer" : "En attente des autres joueurs..."}
-            </Button>
-          </div>
+          <SubmissionStatus
+            submittedCount={submittedCount}
+            totalPlayers={totalPlayers}
+            onStartGame={startGame}
+            allPlayersSubmitted={allPlayersSubmitted}
+          />
         )}
       </div>
     </div>
