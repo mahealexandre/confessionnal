@@ -43,7 +43,7 @@ const Index = () => {
 
       if (playerError) throw playerError;
 
-      localStorage.setItem('username', username);
+      localStorage.setItem("username", username);
       localStorage.setItem(`player_id_${room.id}`, player.id);
       console.log("Created player with ID:", player.id);
 
@@ -79,7 +79,7 @@ const Index = () => {
 
       if (playerError) throw playerError;
 
-      localStorage.setItem('username', username);
+      localStorage.setItem("username", username);
       localStorage.setItem(`player_id_${room.id}`, player.id);
       console.log("Created player with ID:", player.id);
 
@@ -91,12 +91,16 @@ const Index = () => {
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
-      <div className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? "mx-4" : "mx-auto"}`}>
+      <div 
+        className={`w-full max-w-md space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${
+          isMobile ? "mx-4" : "mx-auto"
+        }`}
+      >
         <div className="text-center space-y-2">
           <img 
             src="/confessionnal_crop.png" 
             alt="Confessionnal" 
-            className={`mx-auto ${isMobile ? "max-w-[85%]" : "max-w-[70%]"}`} 
+            className="mx-auto max-w-[85%] sm:max-w-[70%] h-auto"
           />
         </div>
 
