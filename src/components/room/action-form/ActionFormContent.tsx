@@ -34,7 +34,7 @@ export const ActionFormContent = ({ onSubmit, isSubmitting }: ActionFormContentP
         ))}
         <Button
           type="submit"
-          className="w-full bg-[#2E1F47] hover:bg-[#000000]/90 text-white"
+          className="w-full bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white"
           disabled={isSubmitting}
         >
           {isSubmitting ? "Envoi en cours..." : "Suivant"}
