@@ -27,26 +27,40 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     const initializeActions = async () => {
       try {
         // First, ensure game state exists with valid difficulty
-        const { data: gameState, error: gameStateError } = await supabase
+        const { data: existingGameState, error: fetchError } = await supabase
           .from("game_state")
           .select("*")
           .eq("room_id", roomId)
           .maybeSingle();
 
-        if (gameStateError) throw gameStateError;
+        if (fetchError) throw fetchError;
 
-        if (!gameState) {
+        // If no game state exists, try to get the current difficulty from the room
+        if (!existingGameState) {
+          const { data: currentGameState, error: currentError } = await supabase
+            .from("game_state")
+            .select("difficulty")
+            .eq("room_id", roomId)
+            .maybeSingle();
+
+          if (currentError) throw currentError;
+
+          const defaultDifficulty = currentGameState?.difficulty || "sober";
+
           const { error: createError } = await supabase
             .from("game_state")
             .insert([
               { 
                 room_id: roomId,
-                difficulty: "sober",
+                difficulty: defaultDifficulty,
                 animation_state: "idle"
               }
             ]);
           
-          if (createError) throw createError;
+          if (createError) {
+            console.error("Error creating game state:", createError);
+            throw createError;
+          }
         }
 
         // Then fetch actions
