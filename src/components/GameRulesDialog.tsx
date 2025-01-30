@@ -29,14 +29,27 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">1. Création de la partie</h3>
               <p>
-                Un joueur créer une salle et partage le code avec les autres
+                Un joueur crée une salle et partage le code avec les autres
                 participants. Les autres joueurs peuvent rejoindre la salle avec ce
                 code.
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">2. Saisie des actions</h3>
+              <h3 className="font-semibold mb-2">2. Choix du mode de difficulté</h3>
+              <p>
+                Avant de commencer, le créateur de la salle choisit le mode de difficulté de la partie.
+                Ce choix détermine le nombre de jokers et leur coût. Voici les options disponibles :
+              </p>
+              <ul>
+                <li><strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur.</li>
+                <li><strong>Léger 😳</strong> : Trois jokers disponibles, mais chaque joker coûte 3 gorgées.</li>
+                <li><strong>Non recommandé 😵‍💫</strong> : Trois jokers disponibles, mais chaque joker coûte 1 cul-sec.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">3. Saisie des actions</h3>
               <p>
                 Chaque joueur doit écrire 5 défis/questions différentes (ex: Cite 2 personnes que tu méprises).
                 Une fois que tous les joueurs ont soumis leurs défis, la partie peut commencer.
@@ -44,7 +57,7 @@ export const GameRulesDialog = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">3. Déroulement du jeu</h3>
+              <h3 className="font-semibold mb-2">4. Déroulement du jeu</h3>
               <p>
                 Les joueurs doivent cliquer sur le bouton "Lancer" pour
                 faire "tourner la roue". Un joueur est choisi au hasard et
@@ -54,7 +67,7 @@ export const GameRulesDialog = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">4. Actions uniques</h3>
+              <h3 className="font-semibold mb-2">5. Actions uniques</h3>
               <p>
                 Chaque défi ne peut être réalisé qu'une seule fois. Une fois
                 qu'un défi a été effectué, il est marqué comme utilisé et
@@ -63,7 +76,24 @@ export const GameRulesDialog = () => {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">5. Fin de la partie</h3>
+              <h3 className="font-semibold mb-2">6. Les Jokers</h3>
+              <p>
+                Selon le mode de difficulté choisi, les jokers fonctionnent comme suit :
+              </p>
+              <ul>
+                <li><strong>Sans alcool 🙂</strong> : Chaque joueur commence avec 1 joker. Un joker permet de contourner un défi.</li>
+                <li><strong>Léger 😳</strong> : Chaque joueur commence avec 3 jokers, mais chaque joker coûte 3 gorgées.</li>
+                <li><strong>Non recommandé 😵‍💫</strong> : Chaque joueur commence avec 3 jokers, mais chaque joker coûte 1 cul-sec.</li>
+              </ul>
+              <p>
+                Les jokers sont limités, alors il faudra les utiliser judicieusement. Le nombre de
+                jokers restant est affiché à côté du nom du joueur. Si un joueur n'a plus de jokers,
+                il devra réaliser tous les défis qui lui seront attribués.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">7. Fin de la partie</h3>
               <p>
                 La partie se termine lorsque tous les défis ont été réalisés.
                 Les joueurs peuvent également décider d'arrêter la partie à tout
