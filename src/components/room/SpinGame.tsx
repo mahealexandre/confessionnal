@@ -44,7 +44,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     fetchGameState();
 
-    // Subscribe to player updates
+    // Abonnement aux mises à jour des joueurs
     const playersChannel = supabase
       .channel("players_updates")
       .on(
@@ -91,9 +91,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     const newJokersCount = currentPlayer.jokers_count - 1;
 
-    // 🔥 Mise à jour locale immédiate
-    setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
-
     try {
       const { error } = await supabase
         .from("players")
@@ -115,20 +112,12 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       }
 
       toast({ description: penaltyMessage });
-
-      // 🔥 Ajout du setTimeout pour s'assurer que l'affichage se mette à jour après un délai
-      setTimeout(() => {
-        setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
-      }, 500);
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de l'utilisation du joker",
       });
-
-      // 🛑 Si erreur, on remet la valeur d'origine
-      setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount + 1 } : null));
     }
   };
 
