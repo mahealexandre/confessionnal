@@ -75,6 +75,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     const userEmail = "mahe.alexandre@outlook.fr"; // This should ideally come from your auth context
     const player = players.find(p => p.username === userEmail);
     if (player) {
+      console.log("Setting current player:", player);
       setCurrentPlayer(player);
     }
   }, [players]);
