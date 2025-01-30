@@ -19,32 +19,54 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   const [roomId, setRoomId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get the room ID when component mounts
     const fetchRoomId = async () => {
-      const { data: room } = await supabase
-        .from("rooms")
-        .select("id")
-        .eq("code", code)
-        .single();
-      
-      if (room) {
-        setRoomId(room.id);
-        
-        // Also fetch current difficulty
-        const { data: gameState } = await supabase
-          .from("game_state")
-          .select("difficulty")
-          .eq("room_id", room.id)
+      try {
+        const { data: room } = await supabase
+          .from("rooms")
+          .select("id")
+          .eq("code", code)
           .single();
         
-        if (gameState?.difficulty) {
-          setDifficulty(gameState.difficulty);
+        if (room) {
+          setRoomId(room.id);
+          
+          // Try to fetch existing game state
+          const { data: gameState, error: fetchError } = await supabase
+            .from("game_state")
+            .select("difficulty")
+            .eq("room_id", room.id)
+            .maybeSingle();
+          
+          if (fetchError) throw fetchError;
+
+          // If no game state exists, create one
+          if (!gameState) {
+            const { error: insertError } = await supabase
+              .from("game_state")
+              .insert([
+                { 
+                  room_id: room.id,
+                  difficulty: "sober",
+                  animation_state: "idle"
+                }
+              ]);
+            
+            if (insertError) throw insertError;
+          } else if (gameState.difficulty) {
+            setDifficulty(gameState.difficulty);
+          }
         }
+      } catch (error) {
+        console.error("Error setting up game state:", error);
+        toast({
+          variant: "destructive",
+          description: "Erreur lors de l'initialisation de la partie",
+        });
       }
     };
 
     fetchRoomId();
-  }, [code]);
+  }, [code, toast]);
 
   useEffect(() => {
     if (!roomId) return;
