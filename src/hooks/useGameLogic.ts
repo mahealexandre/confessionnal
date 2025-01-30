@@ -26,6 +26,30 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
   useEffect(() => {
     const initializeActions = async () => {
       try {
+        // First, ensure game state exists with valid difficulty
+        const { data: gameState, error: gameStateError } = await supabase
+          .from("game_state")
+          .select("*")
+          .eq("room_id", roomId)
+          .maybeSingle();
+
+        if (gameStateError) throw gameStateError;
+
+        if (!gameState) {
+          const { error: createError } = await supabase
+            .from("game_state")
+            .insert([
+              { 
+                room_id: roomId,
+                difficulty: "sober",
+                animation_state: "idle"
+              }
+            ]);
+          
+          if (createError) throw createError;
+        }
+
+        // Then fetch actions
         const { data: actions, error } = await supabase
           .from("player_actions")
           .select("*")
@@ -39,7 +63,7 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
           setAvailableActions(shuffledActions);
         }
       } catch (error) {
-        console.error("Error fetching actions:", error);
+        console.error("Error initializing game:", error);
       }
     };
 
