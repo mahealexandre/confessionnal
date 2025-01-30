@@ -17,7 +17,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-
+  const [playerList, setPlayerList] = useState<Player[]>(players); // Copie locale des joueurs pour rafraîchissement immédiat
+  
   const {
     isSpinning,
     setIsSpinning,
@@ -44,6 +45,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     fetchGameState();
 
+    // Subscribe to player updates
     const playersChannel = supabase
       .channel("players_updates")
       .on(
@@ -52,10 +54,17 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           event: "UPDATE",
           schema: "public",
           table: "players",
-          filter: `room_id=eq.${roomId}`,
+          filter: room_id=eq.${roomId},
         },
         (payload: any) => {
-          setCurrentPlayer(prev =>
+          setPlayerList((prev) =>
+            prev.map((p) =>
+              p.id === payload.new.id
+                ? { ...p, jokers_count: payload.new.jokers_count }
+                : p
+            )
+          );
+          setCurrentPlayer((prev) =>
             prev?.id === payload.new.id
               ? { ...prev, jokers_count: payload.new.jokers_count }
               : prev
@@ -70,10 +79,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId]);
 
   useEffect(() => {
-    if (selectedPlayer) {
-      setCurrentPlayer(selectedPlayer);
-    }
-  }, [selectedPlayer]);
+    // Trouver et définir le joueur sélectionné
+    const player = players.find(p => p.id === selectedPlayer?.id) || null;
+    setCurrentPlayer(player);
+  }, [players, selectedPlayer]);
 
   const handleSpin = async () => {
     if (isSpinning) return;
@@ -90,10 +99,15 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     try {
       const newJokersCount = currentPlayer.jokers_count - 1;
 
-      // Mise à jour immédiate du state
-      setCurrentPlayer({ ...currentPlayer, jokers_count: newJokersCount });
+      // Mise à jour immédiate du state pour affichage instantané
+      setCurrentPlayer((prev) => prev ? { ...prev, jokers_count: newJokersCount } : null);
+      setPlayerList((prev) =>
+        prev.map((p) =>
+          p.id === currentPlayer.id ? { ...p, jokers_count: newJokersCount } : p
+        )
+      );
 
-      // Mise à jour dans Supabase
+      // Mise à jour dans la base de données
       const { error } = await supabase
         .from("players")
         .update({ jokers_count: newJokersCount })
@@ -158,7 +172,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       : "Lancer !"}
                 </Button>
                 
-                {selectedPlayer && currentPlayer && currentPlayer.jokers_count > 0 && (
+                {currentPlayer && selectedPlayer?.id === currentPlayer.id && (
                   <Button
                     onClick={handleUseJoker}
                     disabled={currentPlayer.jokers_count <= 0}
