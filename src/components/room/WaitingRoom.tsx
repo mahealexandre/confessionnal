@@ -144,10 +144,13 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       // Mise à jour du texte informatif des jokers
       if (value === 'sober') {
         setJokerInfo("1 joker disponible, aucun coût");
+        setHealthWarning("");
       } else if (value === 'easy') {
-        setJokerInfo("3 jokers disponibles, coût : gorgée");
+        setJokerInfo("3 jokers disponibles, coût : 3 gorgées");
+        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
       } else if (value === 'hard') {
-        setJokerInfo("3 jokers disponibles, coût : shot");
+        setJokerInfo("3 jokers disponibles, coût : 1 cul-sec");
+        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
       }
 
     } catch (error) {
