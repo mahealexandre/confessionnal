@@ -18,6 +18,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   const [difficulty, setDifficulty] = useState<string>("sober");
   const [roomId, setRoomId] = useState<string | null>(null);
   const [jokerInfo, setJokerInfo] = useState<string>("1 joker disponible, aucun coût");
+  const [healthWarning, setHealthWarning] = useState<string>("");
 
   useEffect(() => {
     const fetchRoomId = async () => {
