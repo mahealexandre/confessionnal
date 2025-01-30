@@ -154,7 +154,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     disabled={currentPlayer.jokers_count <= 0}
                     className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
                   >
-                    <Gem className="w-6 h-6" />
+                    <span className="text-2xl">🃏</span>
                     <span>({currentPlayer.jokers_count})</span>
                   </Button>
                 )}
