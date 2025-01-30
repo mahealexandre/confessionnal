@@ -42,7 +42,7 @@ export const GameRulesDialog = () => {
                 Ce choix détermine le nombre de jokers et leur coût. Voici les options disponibles :
               </p>
               <ul>
-                <li><strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur.</li>
+                <li><strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur. <strong>(Recommandé)</strong></li>
                 <li><strong>Léger 😳</strong> : Trois jokers disponibles, mais chaque joker coûte 3 gorgées.</li>
                 <li><strong>Non recommandé 😵‍💫</strong> : Trois jokers disponibles, mais chaque joker coûte 1 cul-sec.</li>
               </ul>
@@ -77,14 +77,6 @@ export const GameRulesDialog = () => {
 
             <div>
               <h3 className="font-semibold mb-2">6. Les Jokers</h3>
-              <p>
-                Selon le mode de difficulté choisi, les jokers fonctionnent comme suit :
-              </p>
-              <ul>
-                <li><strong>Sans alcool 🙂</strong> : Chaque joueur commence avec 1 joker. Un joker permet de contourner un défi.</li>
-                <li><strong>Léger 😳</strong> : Chaque joueur commence avec 3 jokers, mais chaque joker coûte 3 gorgées.</li>
-                <li><strong>Non recommandé 😵‍💫</strong> : Chaque joueur commence avec 3 jokers, mais chaque joker coûte 1 cul-sec.</li>
-              </ul>
               <p>
                 Les jokers sont limités, alors il faudra les utiliser judicieusement. Le nombre de
                 jokers restant est affiché à côté du nom du joueur. Si un joueur n'a plus de jokers,
