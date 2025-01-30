@@ -17,6 +17,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   const isMobile = useIsMobile();
   const [difficulty, setDifficulty] = useState<string>("sober");
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [jokerInfo, setJokerInfo] = useState<string>("1 joker disponible, aucun coût");
 
   useEffect(() => {
     const fetchRoomId = async () => {
@@ -139,6 +140,16 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       toast({
         description: "Difficulté mise à jour !",
       });
+
+      // Mise à jour du texte informatif des jokers
+      if (value === 'sober') {
+        setJokerInfo("1 joker disponible, aucun coût");
+      } else if (value === 'easy') {
+        setJokerInfo("3 jokers disponibles, coût : gorgée");
+      } else if (value === 'hard') {
+        setJokerInfo("3 jokers disponibles, coût : shot");
+      }
+
     } catch (error) {
       console.error("Error updating difficulty:", error);
       toast({
@@ -147,20 +158,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       });
     }
   };
-
-  // Rappel du nombre de jokers et de leur coût
-  const getJokerInfo = () => {
-    if (difficulty === 'sober') {
-      return { text: "1 joker (gratuit)", cost: "" };
-    } else if (difficulty === 'easy') {
-      return { text: "3 jokers (1 joker coûte 3 gorgées)", cost: "1 joker = 3 gorgées" };
-    } else if (difficulty === 'hard') {
-      return { text: "3 jokers (1 joker coûte 1 cul-sec)", cost: "1 joker = 1 cul-sec" };
-    }
-    return { text: "", cost: "" };
-  };
-
-  const { text, cost } = getJokerInfo();
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
@@ -221,11 +218,8 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             </ToggleGroupItem>
           </ToggleGroup>
 
-          {/* Rappel du nombre de jokers et de leur coût */}
-          <div className="text-center text-gray-700 mt-4">
-            <p>{text}</p>
-            {cost && <p className="text-sm text-gray-600">{cost}</p>}
-          </div>
+          {/* Rappel des jokers */}
+          <p className="text-sm text-center text-gray-600 mt-2">{jokerInfo}</p>
         </div>
 
         <div className="flex justify-center">
