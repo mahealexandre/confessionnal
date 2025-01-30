@@ -17,7 +17,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-  const [jokerCountDisplay, setJokerCountDisplay] = useState<number>(0); // Nouvelle variable pour gérer l'affichage en douceur
 
   const {
     isSpinning,
@@ -92,8 +91,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     const newJokersCount = currentPlayer.jokers_count - 1;
 
-    // 🔥 Mise à jour immédiate de l'affichage sans effet visible de retour
-    setJokerCountDisplay(newJokersCount);
+    // 🔥 Mise à jour locale immédiate
+    setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
 
     try {
       const { error } = await supabase
@@ -117,9 +116,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
       toast({ description: penaltyMessage });
 
-      // 🔥 Maintenant, on met à jour la valeur à l'ancienne valeur pour afficher correctement
-      setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
-
+      // 🔥 Ajout du setTimeout pour s'assurer que l'affichage se mette à jour après un délai
+      setTimeout(() => {
+        setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
+      }, 500);
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
@@ -128,8 +128,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       });
 
       // 🛑 Si erreur, on remet la valeur d'origine
-      setJokerCountDisplay(currentPlayer.jokers_count);
-      setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: currentPlayer.jokers_count } : null));
+      setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount + 1 } : null));
     }
   };
 
@@ -167,7 +166,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                     className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
                   >
                     <Gem className="w-6 h-6" />
-                    <span>({jokerCountDisplay})</span> {/* Affichage en douceur */}
+                    <span>({currentPlayer.jokers_count})</span>
                   </Button>
                 )}
               </div>
