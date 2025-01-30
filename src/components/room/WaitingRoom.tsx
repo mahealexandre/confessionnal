@@ -36,7 +36,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           
           const { data: gameState, error: fetchError } = await supabase
             .from("game_state")
-            .select("difficulty, joker_info, health_warning")
+            .select("difficulty")
             .eq("room_id", room.id)
             .maybeSingle();
           
@@ -50,9 +50,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           if (!gameState) {
             console.log("Creating new game state with difficulty: sober");
             const initialDifficulty = "sober";
-            const jokerInfoText = "1 joker disponible, aucun coût";
-            const healthWarningText = "";
-
             const { error: insertError } = await supabase
               .from("game_state")
               .insert([
@@ -60,9 +57,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
                   room_id: room.id,
                   difficulty: initialDifficulty,
                   animation_state: "idle",
-                  joker_penalty: "none",
-                  joker_info: jokerInfoText,
-                  health_warning: healthWarningText
+                  joker_penalty: "none"
                 }
               ]);
             
@@ -71,13 +66,9 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               throw insertError;
             }
             setDifficulty(initialDifficulty);
-            setJokerInfo(jokerInfoText);
-            setHealthWarning(healthWarningText);
           } else if (gameState.difficulty) {
             console.log("Setting difficulty from existing game state:", gameState.difficulty);
             setDifficulty(gameState.difficulty);
-            setJokerInfo(gameState.joker_info || "");
-            setHealthWarning(gameState.health_warning || "");
           }
         }
       } catch (error) {
@@ -109,12 +100,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           if (payload.new.difficulty) {
             setDifficulty(payload.new.difficulty);
           }
-          if (payload.new.joker_info) {
-            setJokerInfo(payload.new.joker_info);
-          }
-          if (payload.new.health_warning) {
-            setHealthWarning(payload.new.health_warning);
-          }
         }
       )
       .subscribe();
@@ -134,28 +119,12 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         return;
       }
 
-      let jokerInfoText = "";
-      let healthWarningText = "";
-
-      if (value === 'sober') {
-        jokerInfoText = "1 joker disponible, aucun coût";
-        healthWarningText = ""; // Pas de message pour le mode "sober"
-      } else if (value === 'easy') {
-        jokerInfoText = "3 jokers disponibles, coût : 3 gorgées";
-        healthWarningText = "L'abus d'alcool est dangereux pour la santé, à consommer avec modération";
-      } else if (value === 'hard') {
-        jokerInfoText = "3 jokers disponibles, coût : 1 cul-sec";
-        healthWarningText = "L'abus d'alcool est dangereux pour la santé, à consommer avec modération";
-      }
-
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const { error: gameStateError } = await supabase
         .from("game_state")
         .update({ 
           difficulty: value,
-          joker_penalty: jokerPenalty,
-          joker_info: jokerInfoText,
-          health_warning: healthWarningText
+          joker_penalty: jokerPenalty
         })
         .eq("room_id", roomId);
 
@@ -173,9 +142,17 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         description: "Difficulté mise à jour !",
       });
 
-      // Mise à jour locale des états
-      setJokerInfo(jokerInfoText);
-      setHealthWarning(healthWarningText);
+      // Mise à jour du texte informatif des jokers
+      if (value === 'sober') {
+        setJokerInfo("1 joker disponible, aucun coût");
+        setHealthWarning(""); // Pas de message pour le mode "sober"
+      } else if (value === 'easy') {
+        setJokerInfo("3 jokers disponibles, coût : 3 gorgées");
+        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
+      } else if (value === 'hard') {
+        setJokerInfo("3 jokers disponibles, coût : 1 cul-sec");
+        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
+      }
 
     } catch (error) {
       console.error("Error updating difficulty:", error);
