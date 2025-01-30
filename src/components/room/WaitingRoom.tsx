@@ -57,7 +57,9 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
                   room_id: room.id,
                   difficulty: initialDifficulty,
                   animation_state: "idle",
-                  joker_penalty: "none"
+                  joker_penalty: "none",
+                  joker_info: "1 joker disponible, aucun coût",
+                  health_warning: ""
                 }
               ]);
             
@@ -69,6 +71,8 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           } else if (gameState.difficulty) {
             console.log("Setting difficulty from existing game state:", gameState.difficulty);
             setDifficulty(gameState.difficulty);
+            setJokerInfo(gameState.joker_info || "1 joker disponible, aucun coût");
+            setHealthWarning(gameState.health_warning || "");
           }
         }
       } catch (error) {
@@ -100,6 +104,12 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           if (payload.new.difficulty) {
             setDifficulty(payload.new.difficulty);
           }
+          if (payload.new.joker_info) {
+            setJokerInfo(payload.new.joker_info);
+          }
+          if (payload.new.health_warning) {
+            setHealthWarning(payload.new.health_warning);
+          }
         }
       )
       .subscribe();
@@ -124,7 +134,9 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         .from("game_state")
         .update({ 
           difficulty: value,
-          joker_penalty: jokerPenalty
+          joker_penalty: jokerPenalty,
+          joker_info: value === 'sober' ? "1 joker disponible, aucun coût" : value === 'easy' ? "3 jokers disponibles, coût : 3 gorgées" : "3 jokers disponibles, coût : 1 cul-sec",
+          health_warning: value === 'sober' ? "" : "L'abus d'alcool est dangereux pour la santé, à consommer avec modération"
         })
         .eq("room_id", roomId);
 
@@ -141,19 +153,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       toast({
         description: "Difficulté mise à jour !",
       });
-
-      // Mise à jour du texte informatif des jokers
-      if (value === 'sober') {
-        setJokerInfo("1 joker disponible, aucun coût");
-        setHealthWarning(""); // Pas de message pour le mode "sober"
-      } else if (value === 'easy') {
-        setJokerInfo("3 jokers disponibles, coût : 3 gorgées");
-        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
-      } else if (value === 'hard') {
-        setJokerInfo("3 jokers disponibles, coût : 1 cul-sec");
-        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
-      }
-
+    
     } catch (error) {
       console.error("Error updating difficulty:", error);
       toast({
