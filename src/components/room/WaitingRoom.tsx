@@ -148,6 +148,20 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     }
   };
 
+  // Rappel du nombre de jokers et de leur coût
+  const getJokerInfo = () => {
+    if (difficulty === 'sober') {
+      return { text: "1 joker (gratuit)", cost: "" };
+    } else if (difficulty === 'easy') {
+      return { text: "3 jokers (1 joker coûte 3 gorgées)", cost: "1 joker = 3 gorgées" };
+    } else if (difficulty === 'hard') {
+      return { text: "3 jokers (1 joker coûte 1 cul-sec)", cost: "1 joker = 1 cul-sec" };
+    }
+    return { text: "", cost: "" };
+  };
+
+  const { text, cost } = getJokerInfo();
+
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
@@ -200,12 +214,18 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               Sans alcool 🙂
             </ToggleGroupItem>
             <ToggleGroupItem value="easy" aria-label="Easy">
-              Easy 😳
+              Léger 😳
             </ToggleGroupItem>
             <ToggleGroupItem value="hard" aria-label="Hard">
-              Hard 😵‍💫
+              Non recommandé 😵‍💫
             </ToggleGroupItem>
           </ToggleGroup>
+
+          {/* Rappel du nombre de jokers et de leur coût */}
+          <div className="text-center text-gray-700 mt-4">
+            <p>{text}</p>
+            {cost && <p className="text-sm text-gray-600">{cost}</p>}
+          </div>
         </div>
 
         <div className="flex justify-center">
