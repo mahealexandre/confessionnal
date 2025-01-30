@@ -17,7 +17,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-
+  
   const {
     isSpinning,
     setIsSpinning,
@@ -43,13 +43,39 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
 
     fetchGameState();
+
+    // Subscribe to player updates
+    const playersChannel = supabase
+      .channel("players_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload: any) => {
+          setCurrentPlayer(prev => 
+            prev?.id === payload.new.id 
+              ? { ...prev, jokers_count: payload.new.jokers_count }
+              : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      playersChannel.unsubscribe();
+    };
   }, [roomId]);
 
   useEffect(() => {
-    if (selectedPlayer) {
-      setCurrentPlayer(selectedPlayer);
+    // Sélection du premier joueur (peut être amélioré)
+    if (players.length > 0) {
+      setCurrentPlayer(players[0]);
     }
-  }, [selectedPlayer]);
+  }, [players]);
 
   const handleSpin = async () => {
     if (isSpinning) return;
@@ -64,16 +90,18 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
 
     try {
-      // Met à jour le joker dans la base de données
+      const newJokerCount = currentPlayer.jokers_count - 1;
+
+      // Mise à jour dans la BDD
       const { error } = await supabase
         .from("players")
-        .update({ jokers_count: currentPlayer.jokers_count - 1 })
+        .update({ jokers_count: newJokerCount })
         .eq("id", currentPlayer.id);
 
       if (error) throw error;
 
-      // Met à jour l'état local immédiatement
-      setCurrentPlayer((prev) => prev ? { ...prev, jokers_count: prev.jokers_count - 1 } : prev);
+      // Mise à jour locale immédiate pour éviter le délai d'affichage
+      setCurrentPlayer({ ...currentPlayer, jokers_count: newJokerCount });
 
       let penaltyMessage = "";
       switch (jokerPenalty) {
@@ -90,7 +118,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       toast({ description: penaltyMessage });
 
     } catch (error) {
-      console.error("Error using joker:", error);
+      console.error("Erreur lors de l'utilisation du joker :", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de l'utilisation du joker",
@@ -133,7 +161,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       : "Lancer !"}
                 </Button>
                 
-                {currentPlayer && (
+                {currentPlayer && typeof currentPlayer.jokers_count === "number" && (
                   <Button
                     onClick={handleUseJoker}
                     disabled={currentPlayer.jokers_count <= 0}
