@@ -221,7 +221,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               😵‍💫
             </ToggleGroupItem>
           </ToggleGroup>
-        
+
           {/* Toujours afficher jokerInfo et healthWarning */}
           <div className="mt-4">
             <p className="text-sm text-center text-gray-600">{jokerInfo}</p>
