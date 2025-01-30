@@ -15,9 +15,9 @@ interface SpinGameProps {
 
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
-  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const [playersData, setPlayersData] = useState<Player[]>(players);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-  
+
   const {
     isSpinning,
     setIsSpinning,
@@ -56,10 +56,12 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           filter: `room_id=eq.${roomId}`,
         },
         (payload: any) => {
-          setCurrentPlayer(prev => 
-            prev?.id === payload.new.id 
-              ? { ...prev, jokers_count: payload.new.jokers_count }
-              : prev
+          setPlayersData(prevPlayers =>
+            prevPlayers.map(player =>
+              player.id === payload.new.id
+                ? { ...player, jokers_count: payload.new.jokers_count }
+                : player
+            )
           );
         }
       )
@@ -70,15 +72,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
   }, [roomId]);
 
-  useEffect(() => {
-    // Find the current player in the players array
-    const player = players[0]; // Temporary fix: take the first player
-    if (player) {
-      console.log("Setting current player:", player);
-      setCurrentPlayer(player);
-    }
-  }, [players]);
-
   const handleSpin = async () => {
     if (isSpinning) return;
     setIsSpinning(true);
@@ -88,27 +81,34 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     }
   };
 
-  const handleUseJoker = async () => {
-    if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
+  const handleUseJoker = async (playerId: string) => {
+    const player = playersData.find(p => p.id === playerId);
+    if (!player || player.jokers_count <= 0) return;
 
     try {
       const { error } = await supabase
         .from("players")
-        .update({ jokers_count: currentPlayer.jokers_count - 1 })
-        .eq("id", currentPlayer.id);
+        .update({ jokers_count: player.jokers_count - 1 })
+        .eq("id", player.id);
 
       if (error) throw error;
+
+      setPlayersData(prevPlayers =>
+        prevPlayers.map(p =>
+          p.id === player.id ? { ...p, jokers_count: p.jokers_count - 1 } : p
+        )
+      );
 
       let penaltyMessage = "";
       switch (jokerPenalty) {
         case "sips":
-          penaltyMessage = "Bois 3 gorgées !";
+          penaltyMessage = `${player.name}, bois 3 gorgées !`;
           break;
         case "shot":
-          penaltyMessage = "Bois un cul-sec !";
+          penaltyMessage = `${player.name}, bois un cul-sec !`;
           break;
         default:
-          penaltyMessage = "Joker utilisé !";
+          penaltyMessage = `${player.name} a utilisé un joker !`;
       }
 
       toast({
@@ -157,17 +157,20 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       ? "Partie terminée" 
                       : "Lancer !"}
                 </Button>
-                
-                {currentPlayer && (
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {playersData.map(player => (
                   <Button
-                    onClick={handleUseJoker}
-                    disabled={!currentPlayer || currentPlayer.jokers_count <= 0}
+                    key={player.id}
+                    onClick={() => handleUseJoker(player.id)}
+                    disabled={player.jokers_count <= 0}
                     className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
                   >
                     <Gem className="w-6 h-6" />
-                    <span>({currentPlayer.jokers_count})</span>
+                    <span>{player.name} ({player.jokers_count})</span>
                   </Button>
-                )}
+                ))}
               </div>
 
               <div className="w-full">
