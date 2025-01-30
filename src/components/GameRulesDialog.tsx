@@ -42,7 +42,7 @@ export const GameRulesDialog = () => {
                 Ce choix détermine le nombre de jokers par joueur et leur coût. Voici les options disponibles :
               </p>
               <ul>
-                <li>• <strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur. <strong>(Recommandé)</strong></li>
+                <li>• <strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur. <strong>Recommandé</strong></li>
                 <li>• <strong>Léger 😳</strong> : Trois jokers disponibles, mais chaque joker coûte 3 gorgées.</li>
                 <li>• <strong>Non recommandé 😵‍💫</strong> : Trois jokers disponibles, mais chaque joker coûte 1 cul-sec.</li>
               </ul>
