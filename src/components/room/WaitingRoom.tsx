@@ -211,16 +211,15 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             onValueChange={handleDifficultyChange}
             className="justify-center"
           >
-            <ToggleGroupItem value="sober" aria-label="Sans alcool">
+            <ToggleGroupItem value="sober" aria-label="Sans alcool" className="text-3xl">
               🙂
             </ToggleGroupItem>
-            <ToggleGroupItem value="easy" aria-label="Easy">
+            <ToggleGroupItem value="easy" aria-label="Easy" className="text-3xl">
               😳
             </ToggleGroupItem>
-            <ToggleGroupItem value="hard" aria-label="Hard">
+            <ToggleGroupItem value="hard" aria-label="Hard" className="text-3xl">
               😵‍💫
             </ToggleGroupItem>
-          </ToggleGroup>
 
           {/* Rappel des jokers */}
           <p className="text-sm text-center text-gray-600 mt-2">{jokerInfo}</p>
