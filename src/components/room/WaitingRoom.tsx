@@ -16,8 +16,39 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [difficulty, setDifficulty] = useState<string>("sober");
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get the room ID when component mounts
+    const fetchRoomId = async () => {
+      const { data: room } = await supabase
+        .from("rooms")
+        .select("id")
+        .eq("code", code)
+        .single();
+      
+      if (room) {
+        setRoomId(room.id);
+        
+        // Also fetch current difficulty
+        const { data: gameState } = await supabase
+          .from("game_state")
+          .select("difficulty")
+          .eq("room_id", room.id)
+          .single();
+        
+        if (gameState?.difficulty) {
+          setDifficulty(gameState.difficulty);
+        }
+      }
+    };
+
+    fetchRoomId();
+  }, [code]);
+
+  useEffect(() => {
+    if (!roomId) return;
+
     const channel = supabase
       .channel("game_updates")
       .on(
@@ -26,7 +57,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           event: "UPDATE",
           schema: "public",
           table: "game_state",
-          filter: `room_id=eq.${code}`,
+          filter: `room_id=eq.${roomId}`,
         },
         (payload: any) => {
           if (payload.new.difficulty) {
@@ -39,16 +70,16 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     return () => {
       channel.unsubscribe();
     };
-  }, [code]);
+  }, [roomId]);
 
   const handleDifficultyChange = async (value: string) => {
-    if (!value) return;
+    if (!value || !roomId) return;
 
     try {
       const { error } = await supabase
         .from("game_state")
         .update({ difficulty: value })
-        .eq("room_id", code);
+        .eq("room_id", roomId);
 
       if (error) throw error;
 
