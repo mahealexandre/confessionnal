@@ -41,11 +41,13 @@ export const GameRulesDialog = () => {
                 Avant de commencer, les joueurs choisissent le mode de difficulté de la partie.
                 Ce choix détermine le nombre de jokers par joueur et leur coût. Voici les options disponibles :
               </p>
+              <br>
               <ul>
                 <li>• <strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur. <strong>Recommandé</strong></li>
                 <li>• <strong>Léger 😳</strong> : Trois jokers disponibles, mais chaque joker coûte 3 gorgées.</li>
                 <li>• <strong>Non recommandé 😵‍💫</strong> : Trois jokers disponibles, mais chaque joker coûte 1 cul-sec.</li>
               </ul>
+              <br>
             </div>
 
             <div>
