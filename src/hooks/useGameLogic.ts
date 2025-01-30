@@ -35,25 +35,16 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
 
         if (fetchError) throw fetchError;
 
-        // If no game state exists, try to get the current difficulty from the room
+        // If no game state exists, create one with default values
         if (!existingGameState) {
-          const { data: currentGameState, error: currentError } = await supabase
-            .from("game_state")
-            .select("difficulty")
-            .eq("room_id", roomId)
-            .maybeSingle();
-
-          if (currentError) throw currentError;
-
-          const defaultDifficulty = currentGameState?.difficulty || "sober";
-
           const { error: createError } = await supabase
             .from("game_state")
             .insert([
               { 
                 room_id: roomId,
-                difficulty: defaultDifficulty,
-                animation_state: "idle"
+                difficulty: 'sober', // Always provide a valid difficulty
+                animation_state: "idle",
+                joker_penalty: "none"
               }
             ]);
           
@@ -84,7 +75,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
     initializeActions();
   }, [roomId]);
 
-  // Add new effect to check for game end condition
   useEffect(() => {
     const checkGameEnd = async () => {
       try {
