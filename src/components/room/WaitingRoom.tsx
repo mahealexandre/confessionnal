@@ -47,12 +47,13 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
           if (!gameState) {
             console.log("Creating new game state with difficulty: sober");
+            const initialDifficulty = "sober";
             const { error: insertError } = await supabase
               .from("game_state")
               .insert([
                 { 
                   room_id: room.id,
-                  difficulty: "sober",
+                  difficulty: initialDifficulty,
                   animation_state: "idle",
                   joker_penalty: "none"
                 }
@@ -62,6 +63,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               console.error("Insert error:", insertError);
               throw insertError;
             }
+            setDifficulty(initialDifficulty);
           } else if (gameState.difficulty) {
             console.log("Setting difficulty from existing game state:", gameState.difficulty);
             setDifficulty(gameState.difficulty);
@@ -110,6 +112,11 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
     try {
       console.log("Updating difficulty to:", value);
+      if (!['sober', 'easy', 'hard'].includes(value)) {
+        console.error("Invalid difficulty value:", value);
+        return;
+      }
+
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const { error: gameStateError } = await supabase
         .from("game_state")
