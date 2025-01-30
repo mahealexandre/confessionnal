@@ -6,6 +6,7 @@ export interface Player {
   has_submitted: boolean | null;
   ready_for_next_round: boolean | null;
   is_selected: boolean | null;
+  jokers_count: number | null;
 }
 
 export interface PlayerAction {
