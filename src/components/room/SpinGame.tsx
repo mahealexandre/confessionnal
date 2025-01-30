@@ -17,8 +17,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-  const [playerList, setPlayerList] = useState<Player[]>(players); // Copie locale pour affichage immédiat
-  
+
   const {
     isSpinning,
     setIsSpinning,
@@ -27,7 +26,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     currentAction,
     availableActions,
     startSpinAnimation,
-    cleanupGameData
+    cleanupGameData,
   } = useGameLogic(roomId, players);
 
   useEffect(() => {
@@ -44,12 +43,38 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
 
     fetchGameState();
+
+    // Subscribe to player updates
+    const playersChannel = supabase
+      .channel("players_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload: any) => {
+          setCurrentPlayer((prev) =>
+            prev?.id === payload.new.id
+              ? { ...prev, jokers_count: payload.new.jokers_count }
+              : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      playersChannel.unsubscribe();
+    };
   }, [roomId]);
 
   useEffect(() => {
-    // Met à jour le joueur actuel en fonction du joueur sélectionné
-    const player = players.find(p => p.id === selectedPlayer?.id) || null;
-    setCurrentPlayer(player);
+    const player = players.find((p) => p.id === selectedPlayer?.id);
+    if (player) {
+      setCurrentPlayer(player);
+    }
   }, [players, selectedPlayer]);
 
   const handleSpin = async () => {
@@ -66,16 +91,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     const newJokersCount = currentPlayer.jokers_count - 1;
 
-    // 🔥 Mise à jour locale instantanée
-    setCurrentPlayer((prev) => prev ? { ...prev, jokers_count: newJokersCount } : null);
-    setPlayerList((prev) =>
-      prev.map((p) =>
-        p.id === currentPlayer.id ? { ...p, jokers_count: newJokersCount } : p
-      )
-    );
+    // 🔥 Mise à jour locale immédiate
+    setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
 
     try {
-      // Mise à jour de la base de données
       const { error } = await supabase
         .from("players")
         .update({ jokers_count: newJokersCount })
@@ -104,12 +123,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       });
 
       // 🛑 Si erreur, on remet la valeur d'origine
-      setCurrentPlayer((prev) => prev ? { ...prev, jokers_count: newJokersCount + 1 } : null);
-      setPlayerList((prev) =>
-        prev.map((p) =>
-          p.id === currentPlayer.id ? { ...p, jokers_count: newJokersCount + 1 } : p
-        )
-      );
+      setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount + 1 } : null));
     }
   };
 
@@ -126,11 +140,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
               À qui le tour ? <span className="text-black">😈</span>
             </h1>
 
-            <PlayerDisplay
-              selectedPlayer={selectedPlayer}
-              countdown={countdown}
-              players={players}
-            />
+            <PlayerDisplay selectedPlayer={selectedPlayer} countdown={countdown} players={players} />
 
             <ActionDisplay currentAction={currentAction} />
 
@@ -141,13 +151,9 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                   disabled={isSpinning || availableActions.length === 0}
                   className="flex-1 bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white text-xl py-6"
                 >
-                  {isSpinning 
-                    ? "En cours..." 
-                    : availableActions.length === 0 
-                      ? "Partie terminée" 
-                      : "Lancer !"}
+                  {isSpinning ? "En cours..." : availableActions.length === 0 ? "Partie terminée" : "Lancer !"}
                 </Button>
-                
+
                 {currentPlayer && selectedPlayer?.id === currentPlayer.id && (
                   <Button
                     onClick={handleUseJoker}
@@ -161,11 +167,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
               </div>
 
               <div className="w-full">
-                <Button
-                  onClick={handleStopGame}
-                  variant="outline"
-                  className="w-full"
-                >
+                <Button onClick={handleStopGame} variant="outline" className="w-full">
                   Arrêter la partie
                 </Button>
               </div>
