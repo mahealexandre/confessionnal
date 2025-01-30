@@ -44,7 +44,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               .insert([
                 { 
                   room_id: room.id,
-                  difficulty: "sober", // Using valid difficulty value
+                  difficulty: "sober",
                   animation_state: "idle",
                   joker_penalty: "none"
                 }
@@ -100,7 +100,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     if (!value || !roomId) return;
 
     try {
-      // Update game state with new difficulty and joker penalty
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const { error: gameStateError } = await supabase
         .from("game_state")
@@ -112,7 +111,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
       if (gameStateError) throw gameStateError;
 
-      // Update jokers count for all players in the room
       const jokersCount = value === 'sober' ? 1 : 3;
       const { error: playersError } = await supabase
         .from("players")
