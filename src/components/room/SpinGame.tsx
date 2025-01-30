@@ -3,6 +3,9 @@ import { Player } from "@/types/game";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { PlayerDisplay } from "./PlayerDisplay";
 import { ActionDisplay } from "./ActionDisplay";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface SpinGameProps {
   players: Player[];
@@ -10,6 +13,10 @@ interface SpinGameProps {
 }
 
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
+  const { toast } = useToast();
+  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const [jokerPenalty, setJokerPenalty] = useState<string>("none");
+  
   const {
     isSpinning,
     setIsSpinning,
@@ -21,12 +28,97 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     cleanupGameData
   } = useGameLogic(roomId, players);
 
+  useEffect(() => {
+    const fetchGameState = async () => {
+      const { data: gameState } = await supabase
+        .from("game_state")
+        .select("joker_penalty")
+        .eq("room_id", roomId)
+        .single();
+
+      if (gameState) {
+        setJokerPenalty(gameState.joker_penalty);
+      }
+    };
+
+    fetchGameState();
+
+    // Subscribe to player updates
+    const playersChannel = supabase
+      .channel("players_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${roomId}`,
+        },
+        (payload: any) => {
+          setCurrentPlayer(prev => 
+            prev?.id === payload.new.id 
+              ? { ...prev, jokers_count: payload.new.jokers_count }
+              : prev
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      playersChannel.unsubscribe();
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    // Update current player when user info changes
+    const userEmail = "mahe.alexandre@outlook.fr"; // This should ideally come from your auth context
+    const player = players.find(p => p.username === userEmail);
+    if (player) {
+      setCurrentPlayer(player);
+    }
+  }, [players]);
+
   const handleSpin = async () => {
     if (isSpinning) return;
     setIsSpinning(true);
     const success = await startSpinAnimation();
     if (!success) {
       setIsSpinning(false);
+    }
+  };
+
+  const handleUseJoker = async () => {
+    if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("players")
+        .update({ jokers_count: currentPlayer.jokers_count - 1 })
+        .eq("id", currentPlayer.id);
+
+      if (error) throw error;
+
+      let penaltyMessage = "";
+      switch (jokerPenalty) {
+        case "sips":
+          penaltyMessage = "Bois 3 gorgées !";
+          break;
+        case "shot":
+          penaltyMessage = "Bois un cul-sec !";
+          break;
+        default:
+          penaltyMessage = "Joker utilisé !";
+      }
+
+      toast({
+        description: penaltyMessage,
+      });
+    } catch (error) {
+      console.error("Error using joker:", error);
+      toast({
+        variant: "destructive",
+        description: "Erreur lors de l'utilisation du joker",
+      });
     }
   };
 
@@ -52,11 +144,11 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
             <ActionDisplay currentAction={currentAction} />
 
             <div className="space-y-4 w-full">
-              <div className="w-full">
+              <div className="w-full flex gap-4">
                 <Button
                   onClick={handleSpin}
                   disabled={isSpinning || availableActions.length === 0}
-                  className="w-full bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white text-xl py-6"
+                  className="flex-1 bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white text-xl py-6"
                 >
                   {isSpinning 
                     ? "En cours..." 
@@ -64,6 +156,16 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       ? "Partie terminée" 
                       : "Lancer !"}
                 </Button>
+                
+                {currentPlayer && (
+                  <Button
+                    onClick={handleUseJoker}
+                    disabled={!currentPlayer || currentPlayer.jokers_count <= 0}
+                    className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6"
+                  >
+                    Joker ({currentPlayer.jokers_count})
+                  </Button>
+                )}
               </div>
 
               <div className="w-full">

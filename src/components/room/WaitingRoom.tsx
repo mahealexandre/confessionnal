@@ -30,7 +30,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         if (room) {
           setRoomId(room.id);
           
-          // Try to fetch existing game state
           const { data: gameState, error: fetchError } = await supabase
             .from("game_state")
             .select("difficulty")
@@ -39,7 +38,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           
           if (fetchError) throw fetchError;
 
-          // If no game state exists, create one with valid difficulty
           if (!gameState) {
             const { error: insertError } = await supabase
               .from("game_state")
@@ -47,7 +45,8 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
                 { 
                   room_id: room.id,
                   difficulty: "sober",
-                  animation_state: "idle"
+                  animation_state: "idle",
+                  joker_penalty: "none"
                 }
               ]);
             
@@ -101,12 +100,26 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     if (!value || !roomId) return;
 
     try {
-      const { error } = await supabase
+      // Update game state with new difficulty and joker penalty
+      const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
+      const { error: gameStateError } = await supabase
         .from("game_state")
-        .update({ difficulty: value })
+        .update({ 
+          difficulty: value,
+          joker_penalty: jokerPenalty
+        })
         .eq("room_id", roomId);
 
-      if (error) throw error;
+      if (gameStateError) throw gameStateError;
+
+      // Update jokers count for all players in the room
+      const jokersCount = value === 'sober' ? 1 : 3;
+      const { error: playersError } = await supabase
+        .from("players")
+        .update({ jokers_count: jokersCount })
+        .eq("room_id", roomId);
+
+      if (playersError) throw playersError;
 
       toast({
         description: "Difficulté mise à jour !",
@@ -171,8 +184,8 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             <ToggleGroupItem value="sober" aria-label="Sans alcool">
               Sans alcool 🙂
             </ToggleGroupItem>
-            <ToggleGroupItem value="mid" aria-label="Mid">
-              Mid 😳
+            <ToggleGroupItem value="easy" aria-label="Easy">
+              Easy 😳
             </ToggleGroupItem>
             <ToggleGroupItem value="hard" aria-label="Hard">
               Hard 😵‍💫

@@ -18,6 +18,7 @@ export type Database = {
           dialog_open: boolean | null
           difficulty: string | null
           id: string
+          joker_penalty: string | null
           ready_count: number | null
           room_id: string
         }
@@ -29,6 +30,7 @@ export type Database = {
           dialog_open?: boolean | null
           difficulty?: string | null
           id?: string
+          joker_penalty?: string | null
           ready_count?: number | null
           room_id: string
         }
@@ -40,6 +42,7 @@ export type Database = {
           dialog_open?: boolean | null
           difficulty?: string | null
           id?: string
+          joker_penalty?: string | null
           ready_count?: number | null
           room_id?: string
         }
@@ -116,6 +119,7 @@ export type Database = {
           id: string
           is_host: boolean | null
           is_selected: boolean | null
+          jokers_count: number | null
           ready_for_next_round: boolean | null
           room_id: string | null
           username: string
@@ -126,6 +130,7 @@ export type Database = {
           id?: string
           is_host?: boolean | null
           is_selected?: boolean | null
+          jokers_count?: number | null
           ready_for_next_round?: boolean | null
           room_id?: string | null
           username: string
@@ -136,6 +141,7 @@ export type Database = {
           id?: string
           is_host?: boolean | null
           is_selected?: boolean | null
+          jokers_count?: number | null
           ready_for_next_round?: boolean | null
           room_id?: string | null
           username?: string
