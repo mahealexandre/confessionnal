@@ -2,7 +2,7 @@
   "name": "Confessionnal",
   "short_name": "Confessionnal",
   "description": "Rien ne doit sortir de ce jeu",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
