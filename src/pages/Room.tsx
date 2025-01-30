@@ -109,27 +109,52 @@ const Room = () => {
   const handleStartGame = async () => {
     if (!code) return;
 
-    const { data: room } = await supabase
-      .from("rooms")
-      .select()
-      .eq("code", code)
-      .single();
-
-    if (room) {
-      await supabase
+    try {
+      const { data: room } = await supabase
         .from("rooms")
-        .update({ status: "submitting" })
-        .eq("id", room.id);
+        .select()
+        .eq("code", code)
+        .single();
 
-      // Create initial game state
-      await supabase
-        .from("game_state")
-        .insert([
-          {
-            room_id: room.id,
-            animation_state: "idle",
-          },
-        ]);
+      if (room) {
+        // First update room status
+        await supabase
+          .from("rooms")
+          .update({ status: "submitting" })
+          .eq("id", room.id);
+
+        // Get current game state if it exists
+        const { data: existingGameState } = await supabase
+          .from("game_state")
+          .select("*")
+          .eq("room_id", room.id)
+          .maybeSingle();
+
+        // If no game state exists, create it with default values
+        if (!existingGameState) {
+          const { error: gameStateError } = await supabase
+            .from("game_state")
+            .insert([
+              {
+                room_id: room.id,
+                animation_state: "idle",
+                difficulty: "sober",
+                joker_penalty: "none"
+              },
+            ]);
+
+          if (gameStateError) {
+            console.error("Error creating game state:", gameStateError);
+            throw gameStateError;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error starting game:", error);
+      toast({
+        variant: "destructive",
+        description: "Erreur lors du démarrage de la partie",
+      });
     }
   };
 
