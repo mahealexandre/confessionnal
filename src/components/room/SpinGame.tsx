@@ -15,7 +15,7 @@ interface SpinGameProps {
 
 export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
-  const [playersData, setPlayersData] = useState<Player[]>(players);
+  const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
 
   const {
@@ -43,34 +43,13 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     };
 
     fetchGameState();
-
-    // Subscribe to player updates
-    const playersChannel = supabase
-      .channel("players_updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "players",
-          filter: `room_id=eq.${roomId}`,
-        },
-        (payload: any) => {
-          setPlayersData(prevPlayers =>
-            prevPlayers.map(player =>
-              player.id === payload.new.id
-                ? { ...player, jokers_count: payload.new.jokers_count }
-                : player
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      playersChannel.unsubscribe();
-    };
   }, [roomId]);
+
+  useEffect(() => {
+    if (selectedPlayer) {
+      setCurrentPlayer(selectedPlayer);
+    }
+  }, [selectedPlayer]);
 
   const handleSpin = async () => {
     if (isSpinning) return;
@@ -81,39 +60,35 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     }
   };
 
-  const handleUseJoker = async (playerId: string) => {
-    const player = playersData.find(p => p.id === playerId);
-    if (!player || player.jokers_count <= 0) return;
+  const handleUseJoker = async () => {
+    if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
 
     try {
+      // Met à jour le joker dans la base de données
       const { error } = await supabase
         .from("players")
-        .update({ jokers_count: player.jokers_count - 1 })
-        .eq("id", player.id);
+        .update({ jokers_count: currentPlayer.jokers_count - 1 })
+        .eq("id", currentPlayer.id);
 
       if (error) throw error;
 
-      setPlayersData(prevPlayers =>
-        prevPlayers.map(p =>
-          p.id === player.id ? { ...p, jokers_count: p.jokers_count - 1 } : p
-        )
-      );
+      // Met à jour l'état local immédiatement
+      setCurrentPlayer((prev) => prev ? { ...prev, jokers_count: prev.jokers_count - 1 } : prev);
 
       let penaltyMessage = "";
       switch (jokerPenalty) {
         case "sips":
-          penaltyMessage = `${player.name}, bois 3 gorgées !`;
+          penaltyMessage = "Bois 3 gorgées !";
           break;
         case "shot":
-          penaltyMessage = `${player.name}, bois un cul-sec !`;
+          penaltyMessage = "Bois un cul-sec !";
           break;
         default:
-          penaltyMessage = `${player.name} a utilisé un joker !`;
+          penaltyMessage = "Joker utilisé !";
       }
 
-      toast({
-        description: penaltyMessage,
-      });
+      toast({ description: penaltyMessage });
+
     } catch (error) {
       console.error("Error using joker:", error);
       toast({
@@ -157,20 +132,17 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       ? "Partie terminée" 
                       : "Lancer !"}
                 </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {playersData.map(player => (
+                
+                {currentPlayer && (
                   <Button
-                    key={player.id}
-                    onClick={() => handleUseJoker(player.id)}
-                    disabled={player.jokers_count <= 0}
+                    onClick={handleUseJoker}
+                    disabled={currentPlayer.jokers_count <= 0}
                     className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
                   >
                     <Gem className="w-6 h-6" />
-                    <span>{player.name} ({player.jokers_count})</span>
+                    <span>({currentPlayer.jokers_count})</span>
                   </Button>
-                ))}
+                )}
               </div>
 
               <div className="w-full">
