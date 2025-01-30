@@ -23,7 +23,6 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   useEffect(() => {
     const fetchRoomId = async () => {
       try {
-        console.log("Fetching room ID for code:", code);
         const { data: room } = await supabase
           .from("rooms")
           .select("id")
@@ -31,52 +30,38 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           .single();
         
         if (room) {
-          console.log("Found room:", room);
           setRoomId(room.id);
           
           const { data: gameState, error: fetchError } = await supabase
             .from("game_state")
-            .select("difficulty")
+            .select("difficulty, joker_info, health_warning")
             .eq("room_id", room.id)
             .maybeSingle();
           
-          console.log("Existing game state:", gameState);
-          
           if (fetchError) {
-            console.error("Fetch error:", fetchError);
             throw fetchError;
           }
 
           if (!gameState) {
-            console.log("Creating new game state with difficulty: sober");
             const initialDifficulty = "sober";
-            const { error: insertError } = await supabase
+            await supabase
               .from("game_state")
-              .insert([
-                { 
-                  room_id: room.id,
-                  difficulty: initialDifficulty,
-                  animation_state: "idle",
-                  joker_penalty: "none",
-                  joker_info: "1 joker disponible, aucun coût",
-                  health_warning: ""
-                }
-              ]);
-            
-            if (insertError) {
-              console.error("Insert error:", insertError);
-              throw insertError;
-            }
+              .insert([{ 
+                room_id: room.id,
+                difficulty: initialDifficulty,
+                joker_penalty: "none",
+                joker_info: "1 joker disponible, aucun coût",
+                health_warning: "" 
+              }]);
+
             setDifficulty(initialDifficulty);
-          } else if (gameState.difficulty) {
-            console.log("Setting difficulty from existing game state:", gameState.difficulty);
-            setDifficulty(gameState.difficulty);
+          } else {
+            setDifficulty(gameState.difficulty || "sober");
             setJokerInfo(gameState.joker_info || "1 joker disponible, aucun coût");
             setHealthWarning(gameState.health_warning || "");
           }
         }
       } catch (error) {
-        console.error("Error setting up game state:", error);
         toast({
           variant: "destructive",
           description: "Erreur lors de l'initialisation de la partie",
@@ -101,14 +86,15 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           filter: `room_id=eq.${roomId}`,
         },
         (payload: any) => {
-          if (payload.new.difficulty) {
-            setDifficulty(payload.new.difficulty);
+          const { new: updatedData } = payload;
+          if (updatedData.difficulty) {
+            setDifficulty(updatedData.difficulty);
           }
-          if (payload.new.joker_info) {
-            setJokerInfo(payload.new.joker_info);
+          if (updatedData.joker_info) {
+            setJokerInfo(updatedData.joker_info);
           }
-          if (payload.new.health_warning) {
-            setHealthWarning(payload.new.health_warning);
+          if (updatedData.health_warning) {
+            setHealthWarning(updatedData.health_warning);
           }
         }
       )
@@ -123,39 +109,34 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     if (!value || !roomId) return;
 
     try {
-      console.log("Updating difficulty to:", value);
       if (!['sober', 'easy', 'hard'].includes(value)) {
-        console.error("Invalid difficulty value:", value);
         return;
       }
 
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
-      const { error: gameStateError } = await supabase
+      const jokerInfo = value === 'sober' ? "1 joker disponible, aucun coût" : value === 'easy' ? "3 jokers disponibles, coût : 3 gorgées" : "3 jokers disponibles, coût : 1 cul-sec";
+      const healthWarning = value === 'sober' ? "" : "L'abus d'alcool est dangereux pour la santé, à consommer avec modération";
+
+      await supabase
         .from("game_state")
         .update({ 
           difficulty: value,
           joker_penalty: jokerPenalty,
-          joker_info: value === 'sober' ? "1 joker disponible, aucun coût" : value === 'easy' ? "3 jokers disponibles, coût : 3 gorgées" : "3 jokers disponibles, coût : 1 cul-sec",
-          health_warning: value === 'sober' ? "" : "L'abus d'alcool est dangereux pour la santé, à consommer avec modération"
+          joker_info: jokerInfo,
+          health_warning: healthWarning
         })
         .eq("room_id", roomId);
 
-      if (gameStateError) throw gameStateError;
-
       const jokersCount = value === 'sober' ? 1 : 3;
-      const { error: playersError } = await supabase
+      await supabase
         .from("players")
         .update({ jokers_count: jokersCount })
         .eq("room_id", roomId);
 
-      if (playersError) throw playersError;
-
       toast({
         description: "Difficulté mise à jour !",
       });
-    
     } catch (error) {
-      console.error("Error updating difficulty:", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de la mise à jour de la difficulté",
