@@ -1,0 +1,16 @@
+{
+  "name": "Confessionnal",
+  "short_name": "Confessionnal",
+  "description": "Rien ne doit sortir de ce jeu",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/confessionnal.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
