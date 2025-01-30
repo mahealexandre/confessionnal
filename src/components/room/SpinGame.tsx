@@ -115,6 +115,11 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       }
 
       toast({ description: penaltyMessage });
+
+      // 🔥 Ajout du setTimeout pour s'assurer que l'affichage se mette à jour après un délai
+      setTimeout(() => {
+        setCurrentPlayer((prev) => (prev ? { ...prev, jokers_count: newJokersCount } : null));
+      }, 500);
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
