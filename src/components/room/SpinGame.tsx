@@ -17,7 +17,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-  
+
   const {
     isSpinning,
     setIsSpinning,
@@ -56,8 +56,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           filter: `room_id=eq.${roomId}`,
         },
         (payload: any) => {
-          setCurrentPlayer(prev => 
-            prev?.id === payload.new.id 
+          setCurrentPlayer(prev =>
+            prev?.id === payload.new.id
               ? { ...prev, jokers_count: payload.new.jokers_count }
               : prev
           );
@@ -71,9 +71,9 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId]);
 
   useEffect(() => {
-    // Sélection du premier joueur (peut être amélioré)
+    // Trouver le joueur actuel dans la liste des joueurs
     if (players.length > 0) {
-      setCurrentPlayer(players[0]);
+      setCurrentPlayer(players[0]); // Prend le premier joueur temporairement
     }
   }, [players]);
 
@@ -90,18 +90,18 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
 
     try {
-      const newJokerCount = currentPlayer.jokers_count - 1;
+      const newJokersCount = currentPlayer.jokers_count - 1;
 
-      // Mise à jour dans la BDD
+      // Mise à jour immédiate du state pour éviter le double-clic
+      setCurrentPlayer({ ...currentPlayer, jokers_count: newJokersCount });
+
+      // Mise à jour dans Supabase
       const { error } = await supabase
         .from("players")
-        .update({ jokers_count: newJokerCount })
+        .update({ jokers_count: newJokersCount })
         .eq("id", currentPlayer.id);
 
       if (error) throw error;
-
-      // Mise à jour locale immédiate pour éviter le délai d'affichage
-      setCurrentPlayer({ ...currentPlayer, jokers_count: newJokerCount });
 
       let penaltyMessage = "";
       switch (jokerPenalty) {
@@ -116,9 +116,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       }
 
       toast({ description: penaltyMessage });
-
     } catch (error) {
-      console.error("Erreur lors de l'utilisation du joker :", error);
+      console.error("Error using joker:", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de l'utilisation du joker",
