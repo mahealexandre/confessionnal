@@ -71,9 +71,8 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId]);
 
   useEffect(() => {
-    // Update current player when user info changes
-    const userEmail = "mahe.alexandre@outlook.fr"; // This should ideally come from your auth context
-    const player = players.find(p => p.username === userEmail);
+    // Find the current player in the players array
+    const player = players[0]; // Temporary fix: take the first player
     if (player) {
       console.log("Setting current player:", player);
       setCurrentPlayer(player);
