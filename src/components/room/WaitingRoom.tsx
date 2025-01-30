@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/types/game";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WaitingRoomProps {
   code: string;
@@ -12,6 +15,54 @@ interface WaitingRoomProps {
 export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const [difficulty, setDifficulty] = useState<string>("sober");
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("game_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "game_state",
+          filter: `room_id=eq.${code}`,
+        },
+        (payload: any) => {
+          if (payload.new.difficulty) {
+            setDifficulty(payload.new.difficulty);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [code]);
+
+  const handleDifficultyChange = async (value: string) => {
+    if (!value) return;
+
+    try {
+      const { error } = await supabase
+        .from("game_state")
+        .update({ difficulty: value })
+        .eq("room_id", code);
+
+      if (error) throw error;
+
+      toast({
+        description: "Difficulté mise à jour !",
+      });
+    } catch (error) {
+      console.error("Error updating difficulty:", error);
+      toast({
+        variant: "destructive",
+        description: "Erreur lors de la mise à jour de la difficulté",
+      });
+    }
+  };
 
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
@@ -51,6 +102,26 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800">Difficulté 🎯</h2>
+          <ToggleGroup
+            type="single"
+            value={difficulty}
+            onValueChange={handleDifficultyChange}
+            className="justify-center"
+          >
+            <ToggleGroupItem value="sober" aria-label="Sans alcool">
+              Sans alcool 🙂
+            </ToggleGroupItem>
+            <ToggleGroupItem value="mid" aria-label="Mid">
+              Mid 😳
+            </ToggleGroupItem>
+            <ToggleGroupItem value="hard" aria-label="Hard">
+              Hard 😵‍💫
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         <div className="flex justify-center">

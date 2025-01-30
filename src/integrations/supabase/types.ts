@@ -16,6 +16,7 @@ export type Database = {
           current_action_id: string | null
           current_player_id: string | null
           dialog_open: boolean | null
+          difficulty: string | null
           id: string
           ready_count: number | null
           room_id: string
@@ -26,6 +27,7 @@ export type Database = {
           current_action_id?: string | null
           current_player_id?: string | null
           dialog_open?: boolean | null
+          difficulty?: string | null
           id?: string
           ready_count?: number | null
           room_id: string
@@ -36,6 +38,7 @@ export type Database = {
           current_action_id?: string | null
           current_player_id?: string | null
           dialog_open?: boolean | null
+          difficulty?: string | null
           id?: string
           ready_count?: number | null
           room_id?: string
