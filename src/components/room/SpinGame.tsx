@@ -44,7 +44,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     fetchGameState();
 
-    // Subscribe to player updates
     const playersChannel = supabase
       .channel("players_updates")
       .on(
@@ -71,11 +70,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   }, [roomId]);
 
   useEffect(() => {
-    // Trouver le joueur actuel dans la liste des joueurs
-    if (players.length > 0) {
-      setCurrentPlayer(players[0]); // Prend le premier joueur temporairement
+    if (selectedPlayer) {
+      setCurrentPlayer(selectedPlayer);
     }
-  }, [players]);
+  }, [selectedPlayer]);
 
   const handleSpin = async () => {
     if (isSpinning) return;
@@ -92,7 +90,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
     try {
       const newJokersCount = currentPlayer.jokers_count - 1;
 
-      // Mise à jour immédiate du state pour éviter le double-clic
+      // Mise à jour immédiate du state
       setCurrentPlayer({ ...currentPlayer, jokers_count: newJokersCount });
 
       // Mise à jour dans Supabase
@@ -160,7 +158,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                       : "Lancer !"}
                 </Button>
                 
-                {currentPlayer && typeof currentPlayer.jokers_count === "number" && (
+                {selectedPlayer && currentPlayer && currentPlayer.jokers_count > 0 && (
                   <Button
                     onClick={handleUseJoker}
                     disabled={currentPlayer.jokers_count <= 0}
