@@ -38,8 +38,8 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">2. Choix du mode de difficulté</h3>
               <p>
-                Avant de commencer, le créateur de la salle choisit le mode de difficulté de la partie.
-                Ce choix détermine le nombre de jokers et leur coût. Voici les options disponibles :
+                Avant de commencer, les joueurs choisissent le mode de difficulté de la partie.
+                Ce choix détermine le nombre de jokers par joueur et leur coût. Voici les options disponibles :
               </p>
               <ul>
                 <li><strong>Sans alcool 🙂</strong> : Un joker disponible pour chaque joueur. <strong>(Recommandé)</strong></li>
@@ -78,8 +78,8 @@ export const GameRulesDialog = () => {
             <div>
               <h3 className="font-semibold mb-2">6. Les Jokers</h3>
               <p>
-                Les jokers sont limités, alors il faudra les utiliser judicieusement. Le nombre de
-                jokers restant est affiché à côté du nom du joueur. Si un joueur n'a plus de jokers,
+                Les jokers sont limités, alors il faudra les utiliser judicieusement. Pour les utiliser,
+                il suffit de cliquer sur le bouton "🃏​". Si un joueur n'a plus de jokers,
                 il devra réaliser tous les défis qui lui seront attribués.
               </p>
             </div>
