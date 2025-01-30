@@ -42,16 +42,16 @@ export const GameRulesDialog = () => {
                 Ce choix détermine le nombre de jokers par joueur et leur coût. Voici les options disponibles :
               </p>
               <div className="space-y-2">
-                <div className="border p-3 rounded-md bg-gray-50">
-                  <h4 className="font-medium text-lg">• <strong>Sans alcool 🙂</strong></h4>
+                <div className="border p-2 rounded-md bg-gray-50">
+                  <h4 className="font-medium text-lg"><strong>Sans alcool 🙂</strong></h4>
                   <p>Un joker disponible pour chaque joueur. <strong>Recommandé</strong></p>
                 </div>
-                <div className="border p-3 rounded-md bg-gray-50">
-                  <h4 className="font-medium text-lg">• <strong>Léger 😳</strong></h4>
+                <div className="border p-2 rounded-md bg-gray-50">
+                  <h4 className="font-medium text-lg"><strong>Léger 😳</strong></h4>
                   <p>Trois jokers disponibles, mais chaque joker coûte 3 gorgées.</p>
                 </div>
-                <div className="border p-3 rounded-md bg-gray-50">
-                  <h4 className="font-medium text-lg">• <strong>Non recommandé 😵‍💫</strong></h4>
+                <div className="border p-2 rounded-md bg-gray-50">
+                  <h4 className="font-medium text-lg"><strong>Non recommandé 😵‍💫</strong></h4>
                   <p>Trois jokers disponibles, mais chaque joker coûte 1 cul-sec.</p>
                 </div>
               </div>
