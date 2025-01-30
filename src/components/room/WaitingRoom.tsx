@@ -39,7 +39,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           
           if (fetchError) throw fetchError;
 
-          // If no game state exists, create one
+          // If no game state exists, create one with valid difficulty
           if (!gameState) {
             const { error: insertError } = await supabase
               .from("game_state")
@@ -51,7 +51,10 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
                 }
               ]);
             
-            if (insertError) throw insertError;
+            if (insertError) {
+              console.error("Insert error:", insertError);
+              throw insertError;
+            }
           } else if (gameState.difficulty) {
             setDifficulty(gameState.difficulty);
           }
