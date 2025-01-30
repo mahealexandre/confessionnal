@@ -130,11 +130,14 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         return;
       }
 
+      // Mise à jour immédiate de l'état local
+      setDifficulty(value);
+
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const jokerInfo = value === 'sober' ? "1 joker disponible, aucun coût" : value === 'easy' ? "3 jokers disponibles, coût : 3 gorgées" : "3 jokers disponibles, coût : 1 cul-sec";
       const healthWarning = value === 'sober' ? "" : "L'abus d'alcool est dangereux pour la santé, à consommer avec modération";
 
-      // Mise à jour du game state avec joker_info et health_warning
+      // Mise à jour du game state avec joker_info et health_warning dans la base
       const { error: gameStateError } = await supabase
         .from("game_state")
         .update({ 
