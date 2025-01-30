@@ -6,6 +6,7 @@ import { ActionDisplay } from "./ActionDisplay";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Gem } from "lucide-react";
 
 interface SpinGameProps {
   players: Player[];
@@ -161,9 +162,10 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                   <Button
                     onClick={handleUseJoker}
                     disabled={!currentPlayer || currentPlayer.jokers_count <= 0}
-                    className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6"
+                    className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
                   >
-                    Joker ({currentPlayer.jokers_count})
+                    <Gem className="w-6 h-6" />
+                    <span>({currentPlayer.jokers_count})</span>
                   </Button>
                 )}
               </div>
