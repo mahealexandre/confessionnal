@@ -44,7 +44,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               .insert([
                 { 
                   room_id: room.id,
-                  difficulty: "sober",
+                  difficulty: "sober", // Using valid difficulty value
                   animation_state: "idle",
                   joker_penalty: "none"
                 }
