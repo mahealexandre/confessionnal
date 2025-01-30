@@ -212,13 +212,13 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             className="justify-center"
           >
             <ToggleGroupItem value="sober" aria-label="Sans alcool">
-              Sans alcool 🙂
+              🙂
             </ToggleGroupItem>
             <ToggleGroupItem value="easy" aria-label="Easy">
-              Léger 😳
+              😳
             </ToggleGroupItem>
             <ToggleGroupItem value="hard" aria-label="Hard">
-              Non recommandé 😵‍💫
+              😵‍💫
             </ToggleGroupItem>
           </ToggleGroup>
 
