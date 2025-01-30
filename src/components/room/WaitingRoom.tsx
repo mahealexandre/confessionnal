@@ -145,7 +145,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
       // Mise à jour du texte informatif des jokers
       if (value === 'sober') {
         setJokerInfo("1 joker disponible, aucun coût");
-        setHealthWarning("");
+        setHealthWarning(""); // Pas de message pour le mode "sober"
       } else if (value === 'easy') {
         setJokerInfo("3 jokers disponibles, coût : 3 gorgées");
         setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
@@ -224,6 +224,12 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
           {/* Rappel des jokers */}
           <p className="text-sm text-center text-gray-600 mt-2">{jokerInfo}</p>
+
+          {healthWarning && (
+            <p className="text-sm text-center text-red-600 italic mt-2">
+              {healthWarning}
+            </p>
+          )}
         </div>
 
         <div className="flex justify-center">
