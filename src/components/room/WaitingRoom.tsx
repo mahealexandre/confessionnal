@@ -21,6 +21,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
   useEffect(() => {
     const fetchRoomId = async () => {
       try {
+        console.log("Fetching room ID for code:", code);
         const { data: room } = await supabase
           .from("rooms")
           .select("id")
@@ -28,6 +29,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           .single();
         
         if (room) {
+          console.log("Found room:", room);
           setRoomId(room.id);
           
           const { data: gameState, error: fetchError } = await supabase
@@ -36,9 +38,15 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             .eq("room_id", room.id)
             .maybeSingle();
           
-          if (fetchError) throw fetchError;
+          console.log("Existing game state:", gameState);
+          
+          if (fetchError) {
+            console.error("Fetch error:", fetchError);
+            throw fetchError;
+          }
 
           if (!gameState) {
+            console.log("Creating new game state with difficulty: sober");
             const { error: insertError } = await supabase
               .from("game_state")
               .insert([
@@ -55,6 +63,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
               throw insertError;
             }
           } else if (gameState.difficulty) {
+            console.log("Setting difficulty from existing game state:", gameState.difficulty);
             setDifficulty(gameState.difficulty);
           }
         }
@@ -100,6 +109,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     if (!value || !roomId) return;
 
     try {
+      console.log("Updating difficulty to:", value);
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const { error: gameStateError } = await supabase
         .from("game_state")
