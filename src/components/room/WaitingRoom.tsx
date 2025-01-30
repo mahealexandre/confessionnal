@@ -40,43 +40,22 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
             .eq("room_id", room.id)
             .maybeSingle();
           
-          console.log("Existing game state:", gameState);
-          
-          if (fetchError) {
-            console.error("Fetch error:", fetchError);
-            throw fetchError;
-          }
+          if (fetchError) throw fetchError;
 
           if (!gameState) {
-            console.log("Creating new game state with difficulty: sober");
-            const initialDifficulty = "sober";
             const { error: insertError } = await supabase
               .from("game_state")
-              .insert([
-                { 
-                  room_id: room.id,
-                  difficulty: initialDifficulty,
-                  animation_state: "idle",
-                  joker_penalty: "none"
-                }
-              ]);
+              .insert([{ room_id: room.id, difficulty: "sober", animation_state: "idle", joker_penalty: "none" }]);
             
-            if (insertError) {
-              console.error("Insert error:", insertError);
-              throw insertError;
-            }
-            setDifficulty(initialDifficulty);
-          } else if (gameState.difficulty) {
-            console.log("Setting difficulty from existing game state:", gameState.difficulty);
+            if (insertError) throw insertError;
+            setDifficulty("sober");
+          } else {
             setDifficulty(gameState.difficulty);
           }
         }
       } catch (error) {
         console.error("Error setting up game state:", error);
-        toast({
-          variant: "destructive",
-          description: "Erreur lors de l'initialisation de la partie",
-        });
+        toast({ variant: "destructive", description: "Erreur lors de l'initialisation de la partie" });
       }
     };
 
@@ -88,44 +67,24 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
     const channel = supabase
       .channel("game_updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "game_state",
-          filter: `room_id=eq.${roomId}`,
-        },
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "game_state", filter: `room_id=eq.${roomId}` },
         (payload: any) => {
-          if (payload.new.difficulty) {
-            setDifficulty(payload.new.difficulty);
-          }
+          if (payload.new.difficulty) setDifficulty(payload.new.difficulty);
         }
       )
       .subscribe();
 
-    return () => {
-      channel.unsubscribe();
-    };
+    return () => channel.unsubscribe();
   }, [roomId]);
 
   const handleDifficultyChange = async (value: string) => {
     if (!value || !roomId) return;
 
     try {
-      console.log("Updating difficulty to:", value);
-      if (!['sober', 'easy', 'hard'].includes(value)) {
-        console.error("Invalid difficulty value:", value);
-        return;
-      }
-
       const jokerPenalty = value === 'easy' ? 'sips' : value === 'hard' ? 'shot' : 'none';
       const { error: gameStateError } = await supabase
         .from("game_state")
-        .update({ 
-          difficulty: value,
-          joker_penalty: jokerPenalty
-        })
+        .update({ difficulty: value, joker_penalty: jokerPenalty })
         .eq("room_id", roomId);
 
       if (gameStateError) throw gameStateError;
@@ -138,28 +97,17 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
       if (playersError) throw playersError;
 
-      toast({
-        description: "Difficulté mise à jour !",
-      });
+      toast({ description: "Difficulté mise à jour !" });
 
-      // Mise à jour du texte informatif des jokers
-      if (value === 'sober') {
-        setJokerInfo("1 joker disponible, aucun coût");
-        setHealthWarning(""); // Pas de message pour le mode "sober"
-      } else if (value === 'easy') {
-        setJokerInfo("3 jokers disponibles, coût : 3 gorgées");
-        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
-      } else if (value === 'hard') {
-        setJokerInfo("3 jokers disponibles, coût : 1 cul-sec");
-        setHealthWarning("L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
-      }
+      setJokerInfo(value === 'sober' ? "1 joker disponible, aucun coût" :
+                   value === 'easy' ? "3 jokers disponibles, coût : 3 gorgées" :
+                   "3 jokers disponibles, coût : 1 cul-sec");
+
+      setHealthWarning(value === 'sober' ? "" : "L'abus d'alcool est dangereux pour la santé, à consommer avec modération");
 
     } catch (error) {
       console.error("Error updating difficulty:", error);
-      toast({
-        variant: "destructive",
-        description: "Erreur lors de la mise à jour de la difficulté",
-      });
+      toast({ variant: "destructive", description: "Erreur lors de la mise à jour de la difficulté" });
     }
   };
 
@@ -167,20 +115,13 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
     <div className="h-screen overflow-hidden bg-gradient-to-r from-[#E5DEFF] to-[#FFDEE2] p-4 flex items-center">
       <div className={`max-w-2xl mx-auto space-y-8 bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl ${isMobile ? 'w-full' : ''}`}>
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-[#ff3aa7]">
-            Salle d'attente ⏳
-          </h1>
+          <h1 className="text-4xl font-bold text-[#ff3aa7]">Salle d'attente ⏳</h1>
           <div className="flex items-center justify-center gap-4">
             <p className="text-gray-600">Code de la salle:</p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                navigator.clipboard.writeText(code || "");
-                toast({
-                  description: "Code copié !",
-                });
-              }}
-            >
+            <Button variant="outline" onClick={() => {
+              navigator.clipboard.writeText(code || "");
+              toast({ description: "Code copié !" });
+            }}>
               {code}
             </Button>
           </div>
@@ -190,14 +131,9 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           <h2 className="text-xl font-semibold text-gray-800">Joueurs 👥​</h2>
           <div className="grid gap-2">
             {players.map((player) => (
-              <div
-                key={player.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm"
-              >
+              <div key={player.id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                 <span className="font-medium">{player.username}</span>
-                {player.is_host && (
-                  <span className="text-sm text-[#2E1F47]">Hôte</span>
-                )}
+                {player.is_host && <span className="text-sm text-[#2E1F47]">Hôte</span>}
               </div>
             ))}
           </div>
@@ -205,38 +141,18 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
 
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-800">Difficulté 🎯</h2>
-          <ToggleGroup
-            type="single"
-            value={difficulty}
-            onValueChange={handleDifficultyChange}
-            className="justify-center"
-          >
-            <ToggleGroupItem value="sober" aria-label="Sans alcool" className="text-3xl">
-              🙂
-            </ToggleGroupItem>
-            <ToggleGroupItem value="easy" aria-label="Easy" className="text-3xl">
-              😳
-            </ToggleGroupItem>
-            <ToggleGroupItem value="hard" aria-label="Hard" className="text-3xl">
-              😵‍💫
-            </ToggleGroupItem>
+          <ToggleGroup type="single" value={difficulty} onValueChange={handleDifficultyChange} className="justify-center">
+            <ToggleGroupItem value="sober" aria-label="Sans alcool" className="text-3xl">🙂</ToggleGroupItem>
+            <ToggleGroupItem value="easy" aria-label="Easy" className="text-3xl">😳</ToggleGroupItem>
+            <ToggleGroupItem value="hard" aria-label="Hard" className="text-3xl">😵‍💫</ToggleGroupItem>
           </ToggleGroup>
 
-          {/* Rappel des jokers */}
           <p className="text-sm text-center text-gray-600 mt-2">{jokerInfo}</p>
-
-          {healthWarning && (
-            <p className="text-sm text-center text-red-600 italic mt-2">
-              {healthWarning}
-            </p>
-          )}
+          {healthWarning && <p className="text-sm text-center text-red-600 italic mt-2">{healthWarning}</p>}
         </div>
 
         <div className="flex justify-center">
-          <Button
-            onClick={onStartGame}
-            className="bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white"
-          >
+          <Button onClick={onStartGame} className="bg-[#ff3aa7] hover:bg-[#b40064]/90 text-white">
             Lancer la partie
           </Button>
         </div>
