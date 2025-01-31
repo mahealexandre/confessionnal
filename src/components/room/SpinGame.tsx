@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Player } from "@/types/game";
 import { useGameLogic } from "@/hooks/useGameLogic";
 import { PlayerDisplay } from "./PlayerDisplay";
 import { ActionDisplay } from "./ActionDisplay";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EmojiAnimation } from "@/components/ui/EmojiAnimation";
 
 interface SpinGameProps {
   players: Player[];
@@ -17,7 +16,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   const { toast } = useToast();
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const [jokerPenalty, setJokerPenalty] = useState<string>("none");
-  const [showEmojiAnimation, setShowEmojiAnimation] = useState(false);
 
   const {
     isSpinning,
@@ -45,6 +43,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
     fetchGameState();
 
+    // Abonnement aux mises à jour des joueurs
     const playersChannel = supabase
       .channel("players_updates")
       .on(
@@ -87,7 +86,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   };
 
   const handleUseJoker = async () => {
-    if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
+    if (!currentPlayer || currentPlayer.jokers_count <= "?") return;
 
     const newJokersCount = currentPlayer.jokers_count - 1;
 
@@ -102,22 +101,19 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       let penaltyMessage = "";
       switch (jokerPenalty) {
         case "sips":
-          penaltyMessage = `${currentPlayer.username} : Bois 3 gorgées ! 🥂​`;
+          penaltyMessage = "Bois 3 gorgées ! 🥂​";
           break;
         case "shot":
-          penaltyMessage = `${currentPlayer.username} : Bois un cul-sec ! 🥃​`;
+          penaltyMessage = "Bois un cul-sec ! 🥃​";
           break;
         default:
-          penaltyMessage = `${currentPlayer.username} : Joker utilisé ! 🃏​`;
+          penaltyMessage = "Joker utilisé ! 🃏​";
       }
 
       toast({ 
         description: penaltyMessage,
         duration: 2000
       });
-
-      // Afficher l'animation d'emojis
-      setShowEmojiAnimation(true);
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
@@ -183,10 +179,6 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           </div>
         </div>
       </div>
-      
-      {showEmojiAnimation && (
-        <EmojiAnimation onAnimationEnd={() => setShowEmojiAnimation(false)} />
-      )}
     </div>
   );
 };
