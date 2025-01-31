@@ -101,13 +101,13 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
       let penaltyMessage = "";
       switch (jokerPenalty) {
         case "sips":
-          penaltyMessage = "Bois 3 gorgées ! 🥂​";
+          penaltyMessage = `${currentPlayer.username} : Bois 3 gorgées ! 🥂​`;
           break;
         case "shot":
-          penaltyMessage = "Bois un cul-sec ! 🥃​";
+          penaltyMessage = `${currentPlayer.username} : Bois un cul-sec ! 🥃​`;
           break;
         default:
-          penaltyMessage = "Joker utilisé ! 🃏​";
+          penaltyMessage = `${currentPlayer.username} : Joker utilisé ! 🃏​`;
       }
 
       toast({ 
