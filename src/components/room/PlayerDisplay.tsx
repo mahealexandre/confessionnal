@@ -1,6 +1,5 @@
 import { Player } from "@/types/game";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
 
 interface PlayerDisplayProps {
   selectedPlayer: Player | null;
@@ -11,15 +10,14 @@ interface PlayerDisplayProps {
 export const PlayerDisplay = ({ selectedPlayer, countdown, players = [] }: PlayerDisplayProps) => {
   // Array of emojis to display during countdown
   const emojis = ["🥵", "🤭", "🤔", "🤫", "🫣", "🙊", "😏"];
-  const [lastEmoji, setLastEmoji] = useState("");
+  let lastEmoji = "";
 
   // Get a random emoji for the countdown that's different from the last one
   const getRandomEmoji = () => {
     const availableEmojis = emojis.filter(emoji => emoji !== lastEmoji);
     const randomIndex = Math.floor(Math.random() * availableEmojis.length);
-    const newEmoji = availableEmojis[randomIndex];
-    setLastEmoji(newEmoji);
-    return newEmoji;
+    lastEmoji = availableEmojis[randomIndex];
+    return lastEmoji;
   };
 
   return (
