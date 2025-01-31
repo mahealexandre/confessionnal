@@ -2,9 +2,12 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Player } from "@/types/game";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PlayersList } from "./waiting-room/PlayersList";
+import { RoomCode } from "./waiting-room/RoomCode";
+import { DifficultySelector } from "./waiting-room/DifficultySelector";
+import { GameInfo } from "./waiting-room/GameInfo";
 
 interface WaitingRoomProps {
   code: string;
@@ -82,6 +85,7 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
         toast({
           variant: "destructive",
           description: "Erreur lors de l'initialisation de la partie",
+          duration: 3000,
         });
       }
     };
@@ -185,66 +189,20 @@ export const WaitingRoom = ({ code, players, onStartGame }: WaitingRoomProps) =>
           <h1 className="text-4xl font-bold text-[#ff3aa7]">
             Salle d'attente ⏳
           </h1>
-          <div className="flex items-center justify-center gap-4">
-            <p className="text-gray-600">Code de la salle:</p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                navigator.clipboard.writeText(code || "");
-                toast({
-                  description: "Code copié !",
-                  duration: 3000,
-                });
-              }}
-            >
-              {code}
-            </Button>
-          </div>
+          <RoomCode code={code} />
         </div>
 
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">Joueurs 👥​</h2>
-          <div className="grid gap-2">
-            {players.map((player) => (
-              <div
-                key={player.id}
-                className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm"
-              >
-                <span className="font-medium">{player.username}</span>
-                {player.is_host && (
-                  <span className="text-sm text-[#2E1F47]">Hôte</span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">Difficulté 🎯</h2>
-          <ToggleGroup
-            type="single"
-            value={difficulty}
-            onValueChange={handleDifficultyChange}
-            className="justify-center"
-          >
-            <ToggleGroupItem value="sober" aria-label="Sans alcool" className="text-3xl">
-              🙂
-            </ToggleGroupItem>
-            <ToggleGroupItem value="easy" aria-label="Easy" className="text-3xl">
-              😳
-            </ToggleGroupItem>
-            <ToggleGroupItem value="hard" aria-label="Hard" className="text-3xl">
-              😵‍💫
-            </ToggleGroupItem>
-          </ToggleGroup>
+        <PlayersList players={players} />
         
-          <div className="mt-4">
-            <p className="text-sm text-center text-gray-600">{jokerInfo}</p>
-            {healthWarning && (
-              <p className="text-sm text-center text-red-600 italic">{healthWarning}</p>
-            )}
-          </div>
-        </div>
+        <DifficultySelector 
+          difficulty={difficulty} 
+          onDifficultyChange={handleDifficultyChange} 
+        />
+        
+        <GameInfo 
+          jokerInfo={jokerInfo}
+          healthWarning={healthWarning}
+        />
 
         <div className="flex justify-center">
           <Button
