@@ -5,12 +5,12 @@ interface EmojiAnimationProps {
 }
 
 export const EmojiAnimation = ({ onAnimationEnd }: EmojiAnimationProps) => {
-  const [emojis, setEmojis] = useState<string[]>([]);
+  const [emojis, setEmojis] = useState<number[]>([]);
 
   useEffect(() => {
-    // Générer un tableau d'emojis (personnalisable)
-    const generatedEmojis = Array.from({ length: 20 }, () => "🃏");
-    setEmojis(generatedEmojis);
+    // Générer un tableau d'emojis
+    const emojiIndexes = Array.from({ length: 20 }, (_, index) => index);
+    setEmojis(emojiIndexes);
 
     // Fin de l'animation après 4 secondes
     const timeout = setTimeout(() => {
@@ -22,7 +22,7 @@ export const EmojiAnimation = ({ onAnimationEnd }: EmojiAnimationProps) => {
 
   return (
     <div className="emoji-animation-container">
-      {emojis.map((emoji, index) => (
+      {emojis.map((index) => (
         <span
           key={index}
           className="emoji"
@@ -31,7 +31,7 @@ export const EmojiAnimation = ({ onAnimationEnd }: EmojiAnimationProps) => {
             animationDelay: `${Math.random() * 2}s`, // Délai aléatoire pour variation
           }}
         >
-          {emoji}
+          🃏
         </span>
       ))}
 
@@ -48,20 +48,20 @@ export const EmojiAnimation = ({ onAnimationEnd }: EmojiAnimationProps) => {
         .emoji {
           position: absolute;
           bottom: -100px;
-          font-size: 4rem; /* Taille des emojis */
-          animation: rise 4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          font-size: 3.5rem; /* Taille des emojis */
+          animation: rise 4s ease-in-out forwards;
           opacity: 0.8; /* Légère transparence */
         }
         @keyframes rise {
           0% {
-            transform: translateY(0) scale(1); /* Point de départ */
+            transform: translateY(0) scale(1); /* Départ */
             opacity: 1;
           }
           50% {
             opacity: 0.9; /* Apparition maximale au milieu */
           }
           100% {
-            transform: translateY(-150vh) scale(1.2); /* Fin au-dessus de l'écran */
+            transform: translateY(-120vh) scale(1.2); /* Fin au-dessus de l'écran */
             opacity: 0;
           }
         }
