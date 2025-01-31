@@ -17,7 +17,9 @@ export type Database = {
           current_player_id: string | null
           dialog_open: boolean | null
           difficulty: string | null
+          health_warning: string | null
           id: string
+          joker_info: string | null
           joker_penalty: string | null
           ready_count: number | null
           room_id: string
@@ -29,7 +31,9 @@ export type Database = {
           current_player_id?: string | null
           dialog_open?: boolean | null
           difficulty?: string | null
+          health_warning?: string | null
           id?: string
+          joker_info?: string | null
           joker_penalty?: string | null
           ready_count?: number | null
           room_id: string
@@ -41,7 +45,9 @@ export type Database = {
           current_player_id?: string | null
           dialog_open?: boolean | null
           difficulty?: string | null
+          health_warning?: string | null
           id?: string
+          joker_info?: string | null
           joker_penalty?: string | null
           ready_count?: number | null
           room_id?: string

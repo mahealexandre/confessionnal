@@ -111,12 +111,16 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
           penaltyMessage = "Joker utilisé !";
       }
 
-      toast({ description: penaltyMessage });
+      toast({ 
+        description: penaltyMessage,
+        duration: 3000
+      });
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de l'utilisation du joker",
+        duration: 3000
       });
     }
   };
