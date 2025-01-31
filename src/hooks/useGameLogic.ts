@@ -3,9 +3,11 @@ import { Player, PlayerAction } from "@/types/game";
 import { supabase } from "@/integrations/supabase/client";
 import { useSpinAnimation } from "./useSpinAnimation";
 import { usePlayerSelection } from "./usePlayerSelection";
+import { useActionManagement } from "./useActionManagement";
 
 export const useGameLogic = (roomId: string, players: Player[]) => {
-  const [availableActions, setAvailableActions] = useState<PlayerAction[]>([]);
+  const { availableActions, setAvailableActions } = useActionManagement(roomId);
+  
   const {
     isSpinning,
     setIsSpinning,
@@ -24,58 +26,6 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
   } = usePlayerSelection(roomId, players);
 
   useEffect(() => {
-    const initializeActions = async () => {
-      try {
-        // First, ensure game state exists with valid difficulty
-        const { data: existingGameState, error: fetchError } = await supabase
-          .from("game_state")
-          .select("*")
-          .eq("room_id", roomId)
-          .maybeSingle();
-
-        if (fetchError) throw fetchError;
-
-        // If no game state exists, create one with default values
-        if (!existingGameState) {
-          const { error: createError } = await supabase
-            .from("game_state")
-            .insert([
-              { 
-                room_id: roomId,
-                difficulty: 'sober', // Always provide a valid difficulty
-                animation_state: "idle",
-                joker_penalty: "none"
-              }
-            ]);
-          
-          if (createError) {
-            console.error("Error creating game state:", createError);
-            throw createError;
-          }
-        }
-
-        // Then fetch actions
-        const { data: actions, error } = await supabase
-          .from("player_actions")
-          .select("*")
-          .eq("room_id", roomId)
-          .eq("used", false);
-
-        if (error) throw error;
-
-        if (actions) {
-          const shuffledActions = [...actions].sort(() => Math.random() - 0.5);
-          setAvailableActions(shuffledActions);
-        }
-      } catch (error) {
-        console.error("Error initializing game:", error);
-      }
-    };
-
-    initializeActions();
-  }, [roomId]);
-
-  useEffect(() => {
     const checkGameEnd = async () => {
       try {
         const { data: unusedActions, error } = await supabase
@@ -86,9 +36,7 @@ export const useGameLogic = (roomId: string, players: Player[]) => {
 
         if (error) throw error;
 
-        // If there are no unused actions and we're not already spinning
         if (unusedActions && unusedActions.length === 0 && !isSpinning) {
-          // Wait 5 seconds before stopping the game
           setTimeout(async () => {
             await cleanupGameData();
           }, 5000);
