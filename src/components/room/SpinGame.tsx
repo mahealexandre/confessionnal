@@ -86,7 +86,7 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
   };
 
   const handleUseJoker = async () => {
-    if (!currentPlayer || currentPlayer.jokers_count <= 0) return;
+    if (!currentPlayer || currentPlayer.jokers_count <= "?") return;
 
     const newJokersCount = currentPlayer.jokers_count - 1;
 
