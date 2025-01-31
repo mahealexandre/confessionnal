@@ -6,7 +6,7 @@ import { PlayerDisplay } from "./PlayerDisplay";
 import { ActionDisplay } from "./ActionDisplay";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { EmojiAnimation } from "./EmojiAnimation";
+import { EmojiAnimation } from "@/components/ui/EmojiAnimation";
 
 interface SpinGameProps {
   players: Player[];
