@@ -73,6 +73,7 @@ export const usePlayerSelection = (roomId: string, players: Player[]) => {
       navigate("/");
     } catch (error) {
       console.error("Error cleaning up game data:", error);
+      throw error;
     }
   };
 

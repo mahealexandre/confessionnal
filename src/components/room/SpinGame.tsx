@@ -6,7 +6,6 @@ import { ActionDisplay } from "./ActionDisplay";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Gem } from "lucide-react";
 
 interface SpinGameProps {
   players: Player[];
@@ -113,20 +112,29 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
 
       toast({ 
         description: penaltyMessage,
-        duration: 3000
+        duration: 2000
       });
     } catch (error) {
       console.error("Erreur lors de l'utilisation du joker:", error);
       toast({
         variant: "destructive",
         description: "Erreur lors de l'utilisation du joker",
-        duration: 3000
+        duration: 2000
       });
     }
   };
 
   const handleStopGame = async () => {
-    await cleanupGameData();
+    try {
+      await cleanupGameData();
+    } catch (error) {
+      console.error("Error stopping game:", error);
+      toast({
+        variant: "destructive",
+        description: "Erreur lors de l'arrêt de la partie",
+        duration: 2000
+      });
+    }
   };
 
   return (
@@ -152,16 +160,14 @@ export const SpinGame = ({ players, roomId }: SpinGameProps) => {
                   {isSpinning ? "En cours..." : availableActions.length === 0 ? "Partie terminée" : "Lancer !"}
                 </Button>
 
-                {currentPlayer && selectedPlayer?.id === currentPlayer.id && (
-                  <Button
-                    onClick={handleUseJoker}
-                    disabled={currentPlayer.jokers_count <= 0}
-                    className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2"
-                  >
-                    <span className="text-2xl">🃏</span>
-                    <span>({currentPlayer.jokers_count})</span>
-                  </Button>
-                )}
+                <Button
+                  onClick={handleUseJoker}
+                  disabled={!currentPlayer || currentPlayer?.jokers_count <= 0}
+                  className="bg-[#2E1F47] hover:bg-[#2E1F47]/90 text-white text-xl py-6 flex items-center gap-2 opacity-100 disabled:opacity-50"
+                >
+                  <span className="text-2xl">🃏</span>
+                  <span>({currentPlayer?.jokers_count || 0})</span>
+                </Button>
               </div>
 
               <div className="w-full">

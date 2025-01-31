@@ -10,11 +10,14 @@ interface PlayerDisplayProps {
 export const PlayerDisplay = ({ selectedPlayer, countdown, players = [] }: PlayerDisplayProps) => {
   // Array of emojis to display during countdown
   const emojis = ["🥵", "🤭", "🤔", "🤫", "🫣", "🙊", "😏"];
+  let lastEmoji = "";
 
-  // Get a random emoji for the countdown
+  // Get a random emoji for the countdown that's different from the last one
   const getRandomEmoji = () => {
-    const randomIndex = Math.floor(Math.random() * emojis.length);
-    return emojis[randomIndex];
+    const availableEmojis = emojis.filter(emoji => emoji !== lastEmoji);
+    const randomIndex = Math.floor(Math.random() * availableEmojis.length);
+    lastEmoji = availableEmojis[randomIndex];
+    return lastEmoji;
   };
 
   return (
